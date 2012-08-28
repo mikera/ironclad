@@ -24,7 +24,10 @@
   (def TERRAINTYPE_FORTRESS "Fortress")
   (def TERRAINTYPE_IMPASSABLE "Impassable")])
 
-; locations and points
+;; ================================================
+;; Locations and points
+
+; forward declarations
 (declare adjacents)
 
 ; Concrete type to implement a set of points

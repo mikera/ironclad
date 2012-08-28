@@ -2,10 +2,10 @@
 
 (defrecord Command [
    ^String command-type
-   ^int uid
+   ^long uid
    ^String ability
-   ^int tx
-   ^int ty
+   ^long tx
+   ^long ty
    ^Object param]
   Object
     (toString [self] (str (merge {} self))))

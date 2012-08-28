@@ -1,19 +1,19 @@
 (ns ic.protocols)
 
 (defprotocol PAbility 
-  (get-targets [ability game unit ^int x ^int y])
-  (ai-evaluate [ability game unit ^int sx ^int sy ^int tx ^int ty apcost])
-  (ai-action-param [ability game unit ^int sx ^int sy ^int tx ^int ty])
+  (get-targets [ability game unit x y])
+  (ai-evaluate [ability game unit sx sy tx ty apcost])
+  (ai-action-param [ability game unit sx sy tx ty])
   (needs-param? [ability])
-  (apply-to-game [ability game unit ^int sx ^int sy ^int tx ^int ty command])
+  (apply-to-game [ability game unit sx sy tx ty command])
   (^javax.swing.Icon ability-icon [ability])
   (^String nameString [ability unit]))
 
  
 (defprotocol PMap
   "Abstraction for hexagonal map"
-  (mget [m ^int x ^int y])
-  (mset [m ^int x ^int y v])
+  (mget [m ^long x ^long y])
+  (mset [m ^long x ^long y v])
   (mvisit [m f])
   (mmap [m f])
   (mmap-indexed [m f]))
@@ -21,8 +21,8 @@
 
 (defprotocol PLocation
   "Abstraction for hexagonal map locations"
-  (get-x [p])
-  (get-y [p])
+  (get-x ^long [p])
+  (get-y ^long [p])
   (add [p q])
   (adjacents [p]))
 
@@ -39,37 +39,37 @@
   (update [g update])
   (get-map [g])
   (^ic.map.Point location-of-unit [g u])
-  (get-unit [g ^int x ^int y] [g ^int uid])
-  (get-terrain [g ^int x ^int y])
-  (set-terrain [g ^int x ^int y ^ic.map.Terrain t])
+  (get-unit [g ^long x ^long y] [g ^long uid])
+  (get-terrain [g ^long x ^long y])
+  (set-terrain [g ^long x ^long y ^ic.map.Terrain t])
   (get-unit-map [g])
-  (add-unit [g ^int x ^int y u])
+  (add-unit [g ^long x ^long y u])
   (add-player [g p])
-  (get-player [g ^int player-id])
+  (get-player [g ^long player-id])
   (update-player [g p])
-  (remove-unit [g ^int x ^int y]))
+  (remove-unit [g ^long x ^long y]))
 
 (defprotocol PDrawable
   "Abstraction for drawable"
-  (^Integer sourcex [d])
-  (^Integer sourcey [d])
-  (^Integer sourcew [d])
-  (^Integer sourceh [d])
-  (^Integer centrex [d])
-  (^Integer centrey [d])
-  (^java.awt.image.BufferedImage source-image [d])
-  (^javax.swing.Icon drawable-icon [d]))
+  (sourcex ^long [d])
+  (sourcey ^long [d])
+  (sourcew ^long [d])
+  (sourceh ^long [d])
+  (centrex ^long [d])
+  (centrey ^long [d])
+  (source-image ^java.awt.image.BufferedImage [d])
+  (drawable-icon ^javax.swing.Icon [d]))
 
 
 (defprotocol PCommandState
   "State and transition management for the GUI command interface. Each event updates the command state. 
    When a command is complete it can be accessed with get-command"
-  (left-click [c x y])
-  (right-click [c x y])
-  (mouse-dragged [c x y left-button-down right-button-down])
+  (left-click [c ^long x ^long y])
+  (right-click [c ^long x ^long y])
+  (mouse-dragged [c ^long x ^long y left-button-down right-button-down])
   (list-click [c v])
   (update-command-state [c ^Game g])
-  (draw [c ^Graphics g x y elv])
+  (draw [c ^Graphics g ^long x ^long y elv])
   (apply-to-gui [c])
   (get-command [c]))
  

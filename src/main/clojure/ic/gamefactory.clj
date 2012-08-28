@@ -9,10 +9,13 @@
   (:require [ic.game])
   (:require [ic.units]))
 
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
+
 (def blank-map 
   (ic.map/new-map))
 
-(def DEFAULT_MAP_SIZE 20)
+(def ^:const DEFAULT_MAP_SIZE 20)
 
 (defn find-point [g pred] 
   (loop [i 1000]
@@ -110,7 +113,7 @@
 	      m
 	      (for [
 	            x (range 1 (inc size)) 
-	            y (range 1 (inc size))] [x (- y (unchecked-divide (int x) 2))])))))
+	            y (range 1 (inc size))] [x (- y (/ x 2))])))))
 
 (def region-defs
   [
@@ -222,11 +225,12 @@
 (def test-map
   (let [m (ic.map/new-map)]
 	  (reduce
-	    (fn [m [x y]] (mset m x y (ic.map/terrain "Grassland")))
+	    (fn [m [x y]] 
+        (mset m x y (ic.map/terrain "Grassland")))
 	    m
-	    (for [
-	          x (range 0 10) 
-	          y (range 0 10)] [x y]))))
+	    (for [x (range 0 10) 
+	          y (range 0 10)] 
+        [x y]))))
 
 (defn test-game []
   (let [g (ic.game/new-game)] 

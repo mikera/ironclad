@@ -8,7 +8,8 @@
   (:import [mikera.math.Bounds4i])
   (:import [java.awt Color]))
 
-; (set! *warn-on-reflection* true)
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
 
 (def TERRAIN_TYPES [
   (def TERRAINTYPE_OPEN "Open")
@@ -46,11 +47,11 @@
   ([x] (satisfies? PLocation x)))
 
 ; Concrete type to represent a point location
-(deftype Point [^int x ^int y]
+(deftype Point [^long x ^long y]
   PLocation
-    (get-x [p] x)
-    (get-y [p] y) 
-    (add [p q] 
+    (get-x ^long [p] x)
+    (get-y ^long [p] y) 
+    (add ^Point [p q] 
       (let [x2 (get-x q)
             y2 (get-y q)]
         (Point. (+ x x2) (+ y y2))))
@@ -72,7 +73,7 @@
 
 
 (defn adjacent-point-list 
-  ([x y]
+  ([^long x ^long y]
     (areduce
       mikera.engine.Hex/HEX_DX 
       i 
@@ -122,15 +123,15 @@
 
 ; Map functions
  
-(defn new-map [] 
+(defn new-map ^mikera.persistent.SparseMap [] 
   (mikera.persistent.SparseMap.))
 
 (extend-type mikera.persistent.SparseMap
   PMap 
     (mget [m x y]
-      (.get m x y))
+      (.get m (int x) (int y)))
     (mset [m x y v]
-      (.update m x y v))
+      (.update m (int x) (int y) v))
     (mvisit [m f]
       (.visit 
         m 

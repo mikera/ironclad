@@ -1,6 +1,7 @@
 (ns ic.graphics
   (:require [mc.resource])
-  (:use [ic.protocols]))
+  (:use [ic.protocols])
+  (:import  [mikera.ui.steampunk Images]))
 
 (def ^java.awt.image.BufferedImage unit-image
   (mc.resource/load-image "pov/units.png"))
@@ -27,7 +28,7 @@
   (mc.resource/load-image "pov/icons.png"))
 
 (def ^java.awt.image.BufferedImage wood-image
-  (mc.resource/load-image "images/wood.png"))
+  mikera.ui.steampunk.Images/WOOD)
 
 
 

@@ -11,27 +11,29 @@
   (:import [mikera.util Rand])
   (:import [java.awt Color]))
 
+(set! *unchecked-math* true)
+
 (declare unit)
 (declare unit-type-map)
 
-(def ^Integer UNIT_SIZE (int 64))
+(def ^:const UNIT_SIZE 64)
 
-(def SIDE_IMAGE_OFFSET 8)
+(def ^:const SIDE_IMAGE_OFFSET 8)
 
-(def ^Integer HALF_UNIT_SIZE (int (/ UNIT_SIZE 2)))
+(def ^:const HALF_UNIT_SIZE (/ UNIT_SIZE 2))
 
-(def ATTACK_POWER_FACTOR (double 2.0))
+(def ^:const ATTACK_POWER_FACTOR 2.0)
 
-(def AI_AGGRESSION_FACTOR 1.5) ; ratio of favouring attack / ignoring defence
-(def AI_RANDOM_MOVE_FACTOR 1.00) ; scale of random noise to move evaluation
+(def ^:const AI_AGGRESSION_FACTOR 1.5) ; ratio of favouring attack / ignoring defence
+(def ^:const AI_RANDOM_MOVE_FACTOR 1.00) ; scale of random noise to move evaluation
 
-(def AI_OBJECTIVE_FACTOR 0.3) ; proportion of value for moving closer to enemy
-(def AI_RISK_AVERSION_FACTOR 0.5) ; weighting for avoiding threats for risk-averse units
+(def ^:const AI_OBJECTIVE_FACTOR 0.3) ; proportion of value for moving closer to enemy
+(def ^:const AI_RISK_AVERSION_FACTOR 0.5) ; weighting for avoiding threats for risk-averse units
 
 
-(def DEFAULT_RETURN_FIRE false)
+(def ^:const DEFAULT_RETURN_FIRE false)
 
-(def ^Integer UNIT_ICON_CLIP (int 0))
+(def ^:const UNIT_ICON_CLIP 0)
 
 (def UNIT_TYPES [
 	(def UNITTYPE_INFANTRY "Infantry")

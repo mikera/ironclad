@@ -9,7 +9,6 @@
 (def ^java.awt.image.BufferedImage title-image
   (mc.resource/load-image "pov/title.png"))
  
-
 (def ^java.awt.image.BufferedImage terrain-image
   (mc.resource/load-image "pov/terrain.png"))
 

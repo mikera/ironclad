@@ -1,7 +1,6 @@
 (ns ic.map  
-  (:use [clojure.test])
   (:use [mc.util])
-  (:use [ic.protocols])
+  (:use [ic protocols engine])
   (:require [ic.graphics])
   (:require [clojure.set]) 
   (:import [mikera.engine.Hex])
@@ -24,184 +23,9 @@
   (def TERRAINTYPE_FORTRESS "Fortress")
   (def TERRAINTYPE_IMPASSABLE "Impassable")])
 
-;; ================================================
-;; Locations and points
-
-; forward declarations
-(declare adjacents)
-
-; Concrete type to implement a set of points
-(deftype PointSet [^clojure.lang.IPersistentSet pointset]
-  PLocationSet
-    (get-points [p] pointset)
-    (union [p q]  
-      (reduce conj p (get-points q)))
-    (intersection [p q] 
-      (clojure.set/intersection pointset (get-points q)))
-    (expand [p]
-      (PointSet. (reduce clojure.set/union  pointset (map adjacents pointset))))
-  clojure.lang.Seqable
-    (seq [p] (seq  pointset))
-  clojure.lang.ISeq
-    (first [p] (first pointset))
-    (next [p] (next pointset))
-    (more [p] (rest pointset))
-    (cons [p x] (cons x pointset)))
-
-; Concrete type to represent a point location
-(deftype Point [^long x ^long y]
-  Object
-    (toString [self] (str "(" x "," y ")"))
-    (hashCode [self] (unchecked-add x (Integer/rotateRight y 16)))
-    (equals [self b] 
-            (if (instance? Point b) 
-              (let [b ^Point b] (and (= x (.x b)) (= y (.y b)))) 
-              false)))
-
-(defn get-x ^long [^Point p] (.x p))
-
-(defn get-y ^long [^Point p] (.y p)) 
-
-(defn add ^Point [^Point p ^Point q] 
-  (Point. (+ (.x p) (.x q)) (+ (.y p) (.y q))))
-
-(defn adjacents [^Point p]
-  (PointSet. 
-    (areduce
-      mikera.engine.Hex/HEX_DX 
-      i 
-      pts 
-      #{} 
-      (conj pts (Point. 
-                (+ (.x p) (aget mikera.engine.Hex/HEX_DX i))
-                (+ (.y p) (aget mikera.engine.Hex/HEX_DY i)))))))
-
-(defn adjacent-point-list 
-  ([^long x ^long y]
-    (areduce
-      mikera.engine.Hex/HEX_DX 
-      i 
-      pts 
-      nil 
-      (cons  
-        (Point. 
-                  (+ x (aget mikera.engine.Hex/HEX_DX i))
-                  (+ y (aget mikera.engine.Hex/HEX_DY i))) 
-        pts)))
-  ([^Point p]
-	  (areduce
-		  mikera.engine.Hex/HEX_DX 
-		  i 
-		  pts 
-		  nil 
-		  (cons  
-		    (Point. 
-			            (+ (.x p) (aget mikera.engine.Hex/HEX_DX i))
-			            (+ (.y p) (aget mikera.engine.Hex/HEX_DY i))) 
-		    pts))))
-
-(defn ^Point point 
-  ([x y] 
-    (Point. (int x) (int y)))
-  ([[x y]] 
-    (Point. (int x) (int y))))
-
-(defn ^PointSet point-set 
-  ([] 
-    (PointSet. #{}))
-  ([#^Point x] 
-    (PointSet. #{x})))
-
-; Direction function
-
-(defn calc-dir 
-  ([^Point p]
-    (mikera.engine.Hex/direction (.x p) (.y p)))
-    ([^Point s ^Point t]
-    (mikera.engine.Hex/direction (- (.x t) (.x s)) (- (.y t) (.y s))))
-  ([^Point p ^Integer tx ^Integer ty]
-    (mikera.engine.Hex/direction (- tx (.x p)) (- ty (.y p))))
-  ([^Integer sx ^Integer sy ^Integer tx ^Integer ty]
-    (mikera.engine.Hex/direction (- tx sx) (- ty sx))))
-
-
-; Map functions
- 
-(defn new-map [] 
-  (mikera.persistent.SparseMap.))
-
-(defn mget [^mikera.persistent.SparseMap m ^long x ^long y]
-  (.get m (int x) (int y)))
-	
-(defn mset [^mikera.persistent.SparseMap m ^long x ^long y v]
-  (.update m (int x) (int y) v))
-
-(defn mvisit [^mikera.persistent.SparseMap m f]
-  (.visit 
-    m 
-    (proxy [mikera.persistent.SparseMap$Visitor] []
-      (call [x y value param]
-        (f x y value)
-        false))
-    nil))
-
-(defn mmap ^mikera.persistent.SparseMap [^mikera.persistent.SparseMap m f]
-  (let [a (atom m)]
-    (.visit 
-      m 
-      (proxy [mikera.persistent.SparseMap$Visitor] []
-        (call [x y value a]
-          (swap! a mset x y (f value))
-          false))
-      a)
-    @a))
-
-(defn mmap-indexed ^mikera.persistent.SparseMap [^mikera.persistent.SparseMap m f]
-  (let [a (atom m)]
-    (.visit 
-      m 
-      (proxy [mikera.persistent.SparseMap$Visitor] []
-        (call [x y value a]
-          (swap! a mset x y (f x y value))
-          false))
-      a)
-    @a))
-
-(defn random-point [^mikera.persistent.SparseMap m]
-  (let [^mikera.math.Bounds4i bds (.getNonNullBounds m)]
-    (loop [i 100]
-      (let [x (mikera.util.Rand/range (.xmin bds) (.xmax bds))
-            y (mikera.util.Rand/range (.ymin bds) (.ymax bds))
-            v (mget m x y)]
-        (if (nil? v)
-          (if (> i 0) (recur (dec i)) nil)
-          (point x y))))))
 
 ; Terrain functions
 
-(def TERRAIN_SIZE (int 128))
-
-(def HALF_TERRAIN_SIZE (int (/ TERRAIN_SIZE 2)))
-
-
-(defrecord Terrain []
-  PDrawable
-    (sourcex [t]
-      (* (:ix t) TERRAIN_SIZE))
-	  (sourcey [t]
-      (* (:iy t) TERRAIN_SIZE))
-	  (sourcew [t]
-      TERRAIN_SIZE)
-		(centrex [t]
-		  HALF_TERRAIN_SIZE)
-		(centrey [t]
-		  HALF_TERRAIN_SIZE)
-	  (sourceh [t]
-      TERRAIN_SIZE)
-	  (source-image [t]
-      ic.graphics/terrain-image)
-    (drawable-icon [t]
-     (mikera.ui.BufferedImageIcon. (source-image t) (sourcex t) (sourcey t) (sourcew t) (sourceh t))))
 
 (def default-terrain-data 
   {:image ic.graphics/terrain-image
@@ -210,7 +34,8 @@
    :defence-multiplier 100
    :map-colour (Color. 255 0 255)
    :iy 0
-   :elevation 1})
+   :elevation 1
+   :source-image ic.graphics/terrain-image})
 
 ; list of terrain types, built by make-terrain
 (def temp-terrain-types (atom nil))
@@ -218,7 +43,7 @@
 (defn make-terrain 
   ([props]
     (swap! temp-terrain-types conj
-      (Terrain.
+      (ic.engine.Terrain.
         nil
         (merge default-terrain-data props))))
   ([parent-name props] 
@@ -343,7 +168,7 @@
      {} 
      terrain-types))
 
-(defn ^Terrain terrain [tname] 
+(defn terrain ^ic.engine.Terrain [tname] 
   (or 
     (terrain-type-map tname) 
     (throw (Error. (str  "Terrain type [" tname "] not found")))))
@@ -362,7 +187,7 @@
       "Sea Rocks" "Deep Sea" "Deep Sea"])))
 
 (defn make-map2 [] 
-  (let [m (ic.map/new-map)]
+  (let [m (ic.engine/new-map)]
     (->
       m
       (mset 0 0 (terrain "Grassland"))

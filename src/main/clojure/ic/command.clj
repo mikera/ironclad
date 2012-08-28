@@ -70,7 +70,7 @@
    :tx tx
    :ty ty})
 
-(defn msg-set-terrain [^Integer tx ^Integer ty ^ic.map.Terrain t]
+(defn msg-set-terrain [tx ty ^ic.engine.Terrain t]
   {:update-type MSG_SET_TERRAIN
    :terrain t
    :tx tx

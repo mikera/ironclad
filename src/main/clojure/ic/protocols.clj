@@ -18,19 +18,11 @@
 
 (defprotocol PGame 
   "Abstraction for complete game state"
-  (get-updates [g event])
-  (update [g update])
   (get-map [g])
-  (^ic.map.Point location-of-unit [g u])
-  (get-unit [g ^long x ^long y] [g ^long uid])
-  (get-terrain [g ^long x ^long y])
-  (set-terrain [g ^long x ^long y ^ic.map.Terrain t])
   (get-unit-map [g])
-  (add-unit [g ^long x ^long y u])
   (add-player [g p])
   (get-player [g ^long player-id])
-  (update-player [g p])
-  (remove-unit [g ^long x ^long y]))
+  (update-player [g p]))
 
 (defprotocol PDrawable
   "Abstraction for drawable"

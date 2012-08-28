@@ -1,189 +1,35 @@
 (ns ic.game
-  (:require [ic.map])
+  (:use [ic protocols map engine])
   (:require [ic.units])
   (:use [ic.command])
-  (:require [ic.player])
   (:require [mc.util])
   (:import [mikera.persistent.SparseMap])
   (:import [mikera.persistent.IntMap])
   (:import [mikera.util.Rand])
   (:use [mc.util])
-  (:use [ic.protocols])
   (:use [clojure.test]))
 
-(declare new-unit-id)
+
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
+
+
+(declare ai-evaluation)
 (declare handle-command-event)
 (declare handle-time-event)
 (declare handle-turn-event)
 (declare handle-god-command)
-(declare ai-evaluation)
-
-(def TURN_LENGTH_MILLIS (long 10000))
-(def AI_THINK_MILLIS (long 800))
-(def MAX_AI_TURN_MILLIS (long 2400))
 
 
-;^mikera.persistent.SparseMap terrain 
-;^mikera.persistent.SparseMap units
-;^mikera.persistent.SparseMap effects
-;^mikera.persistent.SparseMap visibility
-;^mikera.persistent.IntMap players
-;^mikera.persistent.IntMap unit-locations
+(def ^:const TURN_LENGTH_MILLIS 10000)
+(def ^:const AI_THINK_MILLIS 800)
+(def ^:const MAX_AI_TURN_MILLIS 2400)
 
-(defrecord Game 
-  []
-  PGame
-    (get-terrain [g x y]
-      (mget (:terrain g) x y))
-    (set-terrain [g x y t]
-      (assoc g :terrain (mset (:terrain g) x y t)))
-    (get-updates [g event]
-      (let [type (:command-type event)]
-        (case type
-          "Command" (handle-command-event g event)
-          "God-Command" (handle-god-command g event)
-          "Tick tock" (throw (Error. "Use (get-ai-commands..) instead"))
-          "Next turn" 
-            (let [updates (handle-turn-event g event)]
-              ;(println updates)
-              updates)
-          (throw (Error. (str "Event type not recognised: " event))))))
-    (update [g update]
-      (let [type ( :update-type update)] 
-        ;(println (str "Game update: " update))
-        (case type
-          "Unit property"
-            (assoc g
-              :units
-              (let [units (:units g)
-                    uid (:uid update)
-                    ^ic.map.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
-                    x (.x pos)
-                    y (.y pos)
-                    unit (get-unit g x y)
-                    updated-unit (assoc unit (:property update) (:value update))]
-                (mset units x y updated-unit)) )
-          "Unit properties"
-            (assoc g
-              :units
-              (let [units (:units g)
-                    uid (:uid update)
-                    ^ic.map.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
-                    x (.x pos)
-                    y (.y pos)
-                    unit (get-unit g x y)
-                    updated-unit (merge unit (:properties update))]
-                (mset units x y updated-unit)) )
-          "Player properties"
-            (let [players ^mikera.persistent.IntMap (:players g)
-                  pid (int (:player-id update))
-                  player (.get players pid)
-                  props (:properties update)]
-              (assoc g :players 
-                (.include players pid (merge player props))))          
-          "Remove unit"
-            (let [units (:units g)
-                  uid (:uid update)
-                  ^ic.map.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
-                  tx (.x pos)
-                  ty (.y pos)]
-                (-> g
-                  (remove-unit tx ty))) 
-          "Add unit"
-            (let [unit (:unit update)
-                  tx (:tx update)
-                  ty (:ty update)]
-                (-> g
-                  (add-unit tx ty unit))) 
-          "Set terrain"
-            (let [t ^ic.map.Terrain (:terrain update)
-                  tx (int (:tx update))
-                  ty (int (:ty update))]
-                (set-terrain g tx ty t)) 
-          "Next turn"
-            (let [next-turn-number (inc (:turn-number g))]
-              (-> g
-                (assoc :turn-number next-turn-number)
-                ((fn [game] 
-                   (assoc game :players
-                     (reduce
-                       (fn [^mikera.persistent.IntMap np [player-id player]]
-                         (.include np player-id (assoc player :ai-evaluation (ai-evaluation game player))))
-                       mikera.persistent.IntMap/EMPTY
-                       (:players game))))))) 
-          "Move unit"
-            (let [uid (:uid update)
-                  ^ic.map.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
-                  sx (:sx update)
-                  sy (:sy update)
-                  tx (:tx update)
-                  ty (:ty update)
-                  unit (get-unit g sx sy)]
-                (-> g
-                  (remove-unit sx sy)
-                  (add-unit tx ty unit))) 
-          "Failed command"
-            (do 
-              (println (str "Failed command: " update))
-              g)
-          (throw (Error. (str "Update type not recognised: " update))))))
-    (get-map [g]
-      (:terrain g))
-    (get-unit [g x y]
-      (mget (:units g) x y))
-    (get-unit [g uid]
-      (let [^ic.map.Point p (.get ^mikera.persistent.IntMap (:unit-locations g) uid)]
-        (if (nil? p)
-          nil
-          (mget (:units g) (.x p) (.y p)))))
-    (location-of-unit [g u]
-      (.get ^mikera.persistent.IntMap (:unit-locations g) (:id u)))
-    (add-unit [g x y u]
-      (let [current-id (:id u)
-            ^Integer uid (or current-id (new-unit-id g))
-            u-with-id (if current-id u (assoc u :id uid))]
-	      (-> g
-	        (assoc :units (mset (:units g) x y u-with-id))
-	        (assoc :unit-locations 
-            (let [^mikera.persistent.IntMap ul (:unit-locations g)] 
-              (.include ul uid (ic.map/point x y)))))))
-    (add-player [g p]
-	    (let [players ^mikera.persistent.IntMap (:players g)
-            pid (mikera.util.Rand/r 1000000)] 
-        (if (nil? (.get players pid))    
-          (assoc g :players (.include players pid (merge p {:id pid})))
-          (recur p))))
-    (update-player [g p]
-      (let [players ^mikera.persistent.IntMap (:players g)
-            pid (int (:id p))]
-        (assoc g :players (.include players pid p))))    
-    (get-player [g player-id]
-      (let [players ^mikera.persistent.IntMap (:players g)]
-        (.get players player-id)))
-    (remove-unit [g x y]
-      (let [^PUnit u (mget (:units g) x y)
-            ^Integer uid (:id u)]
-	      (-> g
-	        (assoc :units (mset (:units g) x y nil))
-          (assoc :unit-locations 
-            (let [^mikera.persistent.IntMap ul (:unit-locations g)] 
-              (.delete ul uid))))))
-    (get-unit-map [g]
-      (:units g)))
-
-(defn new-unit-id [^Game g]
-  "Creates a new, unused unit ID for the given game"
-  (let [^mikera.persistent.IntMap ul (:unit-locations g)
-        id (mikera.util.Rand/nextInt)
-        cu (.get ul id)]
-    (if (nil? cu)
-      id
-      (recur g))))
 
 (defn active-sides [game]
   "Returns a sorted list of sides with active units"
   (sort (reduce
-    (fn [ss [uid ^ic.map.Point pos]]
+    (fn [ss [uid ^ic.engine.Point pos]]
       (let [unit (get-unit game (.x pos) (.y pos))
             player-side (:side unit)]
         (if (not (list-contains? ss player-side))
@@ -200,6 +46,105 @@
 
 (defn side-has-human? [g side]
   (some (fn [[i p]] (and (= side (:side p)) (:is-human p))) (:players g)))
+
+;; =========================================================================
+;; Update functions
+
+ (defn get-updates [g event]
+    (let [type (:command-type event)]
+      (case type
+        "Command" (handle-command-event g event)
+        "God-Command" (handle-god-command g event)
+        "Tick tock" (throw (Error. "Use (get-ai-commands..) instead"))
+        "Next turn" 
+          (let [updates (handle-turn-event g event)]
+            ;(println updates)
+            updates)
+        (throw (Error. (str "Event type not recognised: " event))))))
+   
+(defn update [g update]
+  (let [type ( :update-type update)] 
+    ;(println (str "Game update: " update))
+    (case type
+      "Unit property"
+        (assoc g
+          :units
+          (let [units (:units g)
+                uid (:uid update)
+                ^ic.engine.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
+                x (.x pos)
+                y (.y pos)
+                unit (get-unit g x y)
+                updated-unit (assoc unit (:property update) (:value update))]
+            (mset units x y updated-unit)) )
+      "Unit properties"
+        (assoc g
+          :units
+          (let [units (:units g)
+                uid (:uid update)
+                ^ic.engine.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
+                x (.x pos)
+                y (.y pos)
+                unit (get-unit g x y)
+                updated-unit (merge unit (:properties update))]
+            (mset units x y updated-unit)) )
+      "Player properties"
+        (let [players ^mikera.persistent.IntMap (:players g)
+              pid (int (:player-id update))
+              player (.get players pid)
+              props (:properties update)]
+          (assoc g :players 
+            (.include players pid (merge player props))))          
+      "Remove unit"
+        (let [units (:units g)
+              uid (:uid update)
+              ^ic.engine.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
+              tx (.x pos)
+              ty (.y pos)]
+            (-> g
+              (remove-unit tx ty))) 
+      "Add unit"
+        (let [unit (:unit update)
+              tx (:tx update)
+              ty (:ty update)]
+            (-> g
+              (add-unit tx ty unit))) 
+      "Set terrain"
+        (let [t ^ic.engine.Terrain (:terrain update)
+              tx (int (:tx update))
+              ty (int (:ty update))]
+            (set-terrain g tx ty t)) 
+      "Next turn"
+        (let [next-turn-number (inc (:turn-number g))]
+          (-> g
+            (assoc :turn-number next-turn-number)
+            ((fn [game] 
+               (assoc game :players
+                 (reduce
+                   (fn [^mikera.persistent.IntMap np [player-id player]]
+                     (.include np (int player-id) (assoc player :ai-evaluation (ai-evaluation game player))))
+                   mikera.persistent.IntMap/EMPTY
+                   (:players game))))))) 
+      "Move unit"
+        (let [uid (:uid update)
+              ^ic.engine.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
+              sx (:sx update)
+              sy (:sy update)
+              tx (:tx update)
+              ty (:ty update)
+              unit (get-unit g sx sy)]
+            (-> g
+              (remove-unit sx sy)
+              (add-unit tx ty unit))) 
+      "Failed command"
+        (do 
+          (println (str "Failed command: " update))
+          g)
+      (throw (Error. (str "Update type not recognised: " update))))))
+
+;; ================================================================================
+;; Command handling
+
 
 (defn handle-god-command [g event]
   "Handle god commands - checks validity of command and translates into game updates."
@@ -234,10 +179,10 @@
         (list update)
       (throw (Error. (str "God command not handled: " event))))))
 
-(defn handle-command-event [^Game g command]
+(defn handle-command-event [g command]
   "Handle a command event to a single unit"
   (let [{ cmd :command-type  uid :uid abname :ability  tx :tx ty :ty player-id :player-id} command
-        sp ^ic.map.Point (.get ^mikera.persistent.IntMap (:unit-locations g) uid)]
+        sp ^ic.engine.Point (.get ^mikera.persistent.IntMap (:unit-locations g) uid)]
     ;(println event)
     (cond 
       (nil? sp)
@@ -259,7 +204,7 @@
 
 (defn make-influence-map [^doubles arr ^Integer ox ^Integer oy ^Integer w ^Integer h]
   "Converts an array of doubles into a SparseMap"
-  (let [m (atom (ic.map/new-map))]
+  (let [m (atom (new-map))]
 ;    (println (str "influence-map: " w "*" h " at " ox "," oy))
     (dotimes [ix w] (dotimes [iy h]
       (let [v ^Double (aget arr (unchecked-add ix (unchecked-multiply iy w)))]
@@ -292,7 +237,9 @@
         factor (+ 1.0 (* 0.2 dist))]
     (/ (objective-value unit) (* factor factor factor))))
 
-(defn ai-evaluation [game player]
+(defn ai-evaluation 
+  "Evaluates the current position from the perspective of a player"
+  [game player]
   (let [terrain ^mikera.persistent.SparseMap (get-map game)
         units (:units game)
         bounds ^mikera.math.Bounds4i (.getNonNullBounds terrain)
@@ -347,7 +294,7 @@
 
 ; time update handling
 
-(defn get-ai-command [^Game g player u x y]
+(defn get-ai-command [g player u x y]
   "Creates ai action command list for a single unit"
   (if 
     (or (> (:aps u) 0) (not (empty? (:contents u))))
@@ -355,16 +302,16 @@
     '()))
 
 (defn get-ai-commands 
-  ([^Game g ]
+  ([g ]
     (get-ai-commands g (fn [u] true)))
 
-  ([^Game g unit-pred]
+  ([g unit-pred]
     "Gets a list of all ai-commands for the given game"
     (let [^mikera.persistent.IntMap unit-locs (:unit-locations g)
           ^mikera.persistent.SparseMap units (:units g)]
       ;(println event)
       (mapcat
-        (fn [^ic.map.Point pos]
+        (fn [^ic.engine.Point pos]
           (let [x (.x pos)
                 y (.y pos)
                 u (mget units x y)
@@ -378,7 +325,7 @@
 
 ; next turn handling
 
-(defn handle-unit-turn [^Game g u x y millis base]
+(defn handle-unit-turn [g u x y millis base]
   "Handles the end of turn event for a unit"
   (let [apsmax (:apsmax u)
         ap-recharge-period (if (> apsmax 0) (/ (* 100 TURN_LENGTH_MILLIS) apsmax (:recharge u)) 1000000)
@@ -398,7 +345,7 @@
         nil))))
 
 
-(defn handle-turn-event [^Game g event]
+(defn handle-turn-event [g event]
   "Handles the End of Turn event"
   (let [{ cmd :command-type } event
         ^mikera.persistent.IntMap unit-locs (:unit-locations g)
@@ -407,7 +354,7 @@
     ; TODO: fix base time update
     (concat
 	    (doall (mapcat
-	      (fn [^ic.map.Point pos]
+	      (fn [^ic.engine.Point pos]
 	        (let [x (.x pos)
 	              y (.y pos)
 	              u (get-unit g x y) 
@@ -434,17 +381,14 @@
       (list (msg-next-turn)))))
 
 
-(defn new-units-map [] 
-  (mikera.persistent.SparseMap.))
-
-(defn validate-game [^Game g]
+(defn validate-game [g]
   (let [^mikera.persistent.IntMap unit-locs (:unit-locations g)
         ^mikera.persistent.SparseMap units (:units g)
         players ^mikera.persistent.IntMap (:players g)]
-	  (doseq [[uid ^ic.map.Point loc] unit-locs]
+	  (doseq [[uid ^ic.engine.Point loc] unit-locs]
 	    (let [u (get-unit g (.x loc) (.y loc))
-           player-id (:player-id u)]
-		    (assert (instance? ic.map.Point loc))
+            player-id (:player-id u)]
+		    (assert (instance? ic.engine.Point loc))
 		    (assert (= uid (:id u)))
 	      (assert (not (nil? player-id)))
         (assert (not (nil? (.get players player-id))))
@@ -453,43 +397,4 @@
 	    (let []
 	      (assert (= pid (:id player))))))
   true)
-
-(defn new-game [] 
-  (Game.
-    nil 
-    {:terrain (ic.map/new-map)
-     :units (new-units-map)
-     :effects (mikera.persistent.SparseMap.)
-     :visibility (mikera.persistent.SparseMap.)
-     :players (mikera.persistent.IntMap/EMPTY)
-     :unit-locations (mikera.persistent.IntMap/EMPTY)
-     :turn-number 1}))
-
-
-(deftest t2
-  (let [ng (-> (new-game) 
-             (add-player (ic.player/player {:name "Test player" :side 0 :is-human true}))
-             (set-terrain 2 2 (ic.map/terrain "Grassland")))
-        player (get-player-for-side ng 0)
-        player-id (:id player)
-        u (ic.units/unit "Steam Tank" {:player-id player-id})
-        u2 (ic.units/unit "Rifles" {:player-id player-id})
-        g (-> ng
-            (add-unit 2 2 u)
-            (add-unit 3 3 u2))]
-    (is (side-has-human? g 0))
-    (is (not (side-has-human? g 1)))
-    (is (= [0] (active-sides g)))
-    (is (not (nil? (get-unit g 2 2))))
-    (is (nil? (get-unit (remove-unit g 2 2) 2 2)))
-    (validate-game g)
-    (ai-evaluation ng player)))
-
-(deftest t-terrain
-  (let [g (new-game)
-        t (ic.map/terrain "Grassland")]
-    (is (nil? (get-terrain g -5 -5)))
-    (is (= t (get-terrain (set-terrain g -5 -5 t) -5 -5)))))
-
-
 

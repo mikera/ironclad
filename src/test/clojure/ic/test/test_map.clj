@@ -1,7 +1,12 @@
 (ns ic.test.test-map
   (:use clojure.test)
-  (:use [ic protocols map])
-  (:import [ic.map Point]))
+  (:use [ic protocols engine map])
+  (:import [ic.engine Point]))
+
+
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
+
 
 (deftest points
   (testing "Basic Point"
@@ -12,7 +17,7 @@
 
 (deftest base-map
   (testing "Basic Map"         
-    (let [m (ic.map/new-map)] 
+    (let [m (new-map)] 
       (is (= nil (mget m 1 2))))))
 
 (deftest t1

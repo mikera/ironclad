@@ -1,9 +1,7 @@
 (ns ic.units
   (:use [clojure.test])
   (:use [mc.util])
-  (:use ic.protocols)
-  (:use [ic.map])
-  (:require [ic.graphics])
+  (:use [ic protocols engine map graphics])
   (:use [ic.command])
   (:require [mc.csv])
   (:require [ic.lib])
@@ -17,11 +15,7 @@
 (declare unit)
 (declare unit-type-map)
 
-(def ^:const UNIT_SIZE 64)
 
-(def ^:const SIDE_IMAGE_OFFSET 8)
-
-(def ^:const HALF_UNIT_SIZE (/ UNIT_SIZE 2))
 
 (def ^:const ATTACK_POWER_FACTOR 2.0)
 
@@ -33,8 +27,6 @@
 
 
 (def ^:const DEFAULT_RETURN_FIRE false)
-
-(def ^:const UNIT_ICON_CLIP 0)
 
 (def UNIT_TYPES [
 	(def UNITTYPE_INFANTRY "Infantry")
@@ -98,32 +90,6 @@
 
 (def TERRAIN_MOVE_COST (load-table "tables/terrain_move_cost.csv"))
  
-(defrecord Unit []
-  PDrawable
-    (sourcex [u]
-      (unchecked-multiply (unchecked-add (unchecked-add (int (:ix u)) (if (:oriented-image u) (int (:dir u)) (int 0))) (int (* SIDE_IMAGE_OFFSET (:side u)))) (int UNIT_SIZE)))
-    (sourcey [u]
-      (unchecked-multiply (int (:iy u)) (int UNIT_SIZE)))
-    (centrex [u]
-      HALF_UNIT_SIZE)
-    (centrey [u]
-      HALF_UNIT_SIZE)
-    (sourcew [u]
-      UNIT_SIZE)
-    (sourceh [u]
-      UNIT_SIZE)
-    (source-image [u]
-      ic.graphics/unit-image)
-    (drawable-icon [u]
-     (mikera.ui.BufferedImageIcon. 
-			(source-image u) 
-			(+ (sourcex u) UNIT_ICON_CLIP) 
-			(+ (sourcey u) UNIT_ICON_CLIP) 
-			(- (sourcew u) (* 2 UNIT_ICON_CLIP)) 
-			(- (sourceh u) (* 2 UNIT_ICON_CLIP)))))
-
-
-
 
 ; commun unit functions
 
@@ -175,11 +141,11 @@
       true
       (can-enter? unit tu)))) 
  
-(defn ^Integer base-move-cost [unit terrain]  
+(defn base-move-cost ^long [unit terrain]  
   "Gets base move cost as percentage, 100 = 1 AP"
   (let [terrain-type (:terrain-type terrain)
         unit-move-type (:move-type unit)
-        base-cost (int ((TERRAIN_MOVE_COST terrain-type) unit-move-type))]
+        base-cost (long ((TERRAIN_MOVE_COST terrain-type) unit-move-type))]
     base-cost))
 
 (defn ^Integer zoc-cost 
@@ -248,7 +214,7 @@
                          (- aps a) ; use all remaining aps
                          0)))
              newaps (+ a mcost)
-             newpos (ic.map/point tx ty)
+             newpos (point tx ty)
              bestaps (moves newpos)
              found (and 
                      (> mcost 0) ; move is allowable
@@ -285,7 +251,7 @@
 (defn possible-moves 
   ([game unit x y]
 	  (let [aps (:aps unit)
-	        moves {(ic.map/point x y) 0}]
+	        moves {(point x y) 0}]
 	    (possible-moves game unit aps moves {})))
   ([game unit apsmax newmoves allmoves]
     (if (empty? newmoves)
@@ -305,7 +271,7 @@
 
 
 (defn trace-moves [possible-moves sx sy tx ty]
-  (let [p (ic.map/point tx ty)
+  (let [p (point tx ty)
         paps (possible-moves p)] 
     (cond 
       (nil? paps)
@@ -313,8 +279,8 @@
       (and (= sx (.x p)) (= sy (.y p)))
         (list p)
       :default  
-        (let [adjs (ic.map/adjacent-point-list p)
-	            pp ^ic.map.Point (argmax #(- (or (possible-moves %) 1000000)) adjs  )]
+        (let [adjs (adjacent-point-list p)
+	            pp ^ic.engine.Point (argmax #(- (or (possible-moves %) 1000000)) adjs  )]
 	        (cons
 	          p
 	          (trace-moves possible-moves sx sy (.x pp) (.y pp)))))))
@@ -340,13 +306,13 @@
 (defn deploy-targets [ability game unit x y]
   (let []
 	  (reduce 
-	    (fn [bm ^ic.map.Point pos] 
+	    (fn [bm ^ic.engine.Point pos] 
 	      (if 
           (can-deploy? ability game unit (.x pos) (.y pos))
 	        (assoc bm pos (:cost ability))
 	        bm))
 	    {}
-	    (ic.map/adjacent-point-list x y))))
+	    (adjacent-point-list x y))))
 
 
 ; building logic
@@ -383,12 +349,12 @@
 
 (defn build-targets [ability game unit x y]
   (reduce 
-    (fn [bm ^ic.map.Point pos] 
+    (fn [bm ^ic.engine.Point pos] 
       (if (can-build? ability game unit (.x pos) (.y pos))
         (assoc bm pos (:cost ability))
         bm))
     {}
-    (ic.map/adjacent-point-list x y)))
+    (adjacent-point-list x y)))
 
 
 ; attack logic
@@ -472,7 +438,7 @@
                        :tx tx
                        :ty ty}}
           (if (not= MOVETYPE_RAIL (:move-type unit) )
-            {:dir (ic.map/calc-dir (location-of-unit game unit) tx ty)}
+            {:dir (calc-dir (location-of-unit game unit) tx ty)}
             {})))
       (damage-unit target game tx ty actual-damage))))
 
@@ -533,10 +499,10 @@
               (can-attack ability unit tu game x y tx ty)
 	            (not (and (= x tx) (= y ty)))
 	            (<= cost (:aps unit)))
-	          (swap! attacks assoc (ic.map/point tx ty) cost)))))
+	          (swap! attacks assoc (point tx ty) cost)))))
 	    @attacks))
 
-(defn ai-unit-value [game unit x y]
+(defn ai-unit-value ^double [game unit x y]
   (* 1.0 (:value unit)))
 
 ; ======================================================================================================================
@@ -586,7 +552,7 @@
     (apply-to-game [ability game unit sx sy tx ty command]
       (let [possible-moves (possible-moves game unit sx sy)
             tu (get-unit game tx ty)
-            tpos (ic.map/point tx ty)
+            tpos (point tx ty)
             ^Integer aps (:aps unit)
             move-aps (mikera.util.Maths/roundUp (double (or (possible-moves tpos) (inc aps))))]      
         (cond
@@ -611,7 +577,7 @@
           ; standard move  
           :default
 	          (let [moves (reverse (trace-moves possible-moves sx sy tx ty))
-                  [^ic.map.Point lm1 ^ic.map.Point lm2] (drop (- (count moves) 2) moves)]
+                  [^ic.engine.Point lm1 ^ic.engine.Point lm2] (drop (- (count moves) 2) moves)]
 		          (list-not-nil
 		            (msg-update-unit unit :dir (mikera.engine.Hex/direction (- (.x lm2) (.x lm1)) (- (.y lm2) (.y lm1))))
 	              (msg-update-unit unit :aps (int (- aps move-aps)))
@@ -649,7 +615,7 @@
             i)
           nil)))
     (apply-to-game [ability game unit sx sy tx ty command]
-      (let [tpos (ic.map/point tx ty)
+      (let [tpos (point tx ty)
             aps (:aps unit)
             deploy-terrain (get-terrain game tx ty)
             deploy-pos (int (:param command))
@@ -708,7 +674,7 @@
           (mc.util/rand-choice build-list)
           nil)))
     (apply-to-game [ability game unit sx sy tx ty command]
-      (let [tpos (ic.map/point tx ty)
+      (let [tpos (point tx ty)
             aps (:aps unit)
             build-terrain (get-terrain game tx ty)
             build-list (:build-list ability)
@@ -820,7 +786,7 @@
 	 
 	          (let [targets (get-targets ability game unit sx sy)
 	                value-atom (atom 0)]
-	            (doseq [[^ic.map.Point pos apcost] targets]
+	            (doseq [[^ic.engine.Point pos apcost] targets]
 	              (let [tx (.x pos)
                       ty (.y pos)] 
                   (let [v (ai-evaluate ability game unit sx sy tx ty apcost)]
@@ -847,7 +813,7 @@
               (mapcat 
                 (fn [[ability ts]]
                   (map
-                    (fn [[^ic.map.Point pos apscost]]
+                    (fn [[^ic.engine.Point pos apscost]]
                       [(+
                         (ai-evaluate ability game unit x y (.x pos) (.y pos) apscost)
                         (if (:is-move ability)
@@ -860,7 +826,7 @@
               0 ; initial best value
               nil)]
     (and cmd
-      (let [[value ability ^ic.map.Point pos] cmd
+      (let [[value ability ^ic.engine.Point pos] cmd
             tx (.x pos)
             ty (.y pos)
             param (ai-action-param ability game unit x y tx ty)]
@@ -941,13 +907,14 @@
    :size 100
    :dir 0                
    :side 0
+   :source-image ic.graphics/unit-image
    :contents []
    :return-fire DEFAULT_RETURN_FIRE})
 
 (defn make-unit-type [supplied-props] 
   (let [props (merge default-unit-properties supplied-props)
         max-power-attack (valmax (fn [a] (or (:power a) 0)) (:abilities props))]
-	  (Unit.
+	  (ic.engine.Unit.
 	    nil 
 	    (merge 
 	      props
@@ -1654,13 +1621,14 @@
   true)
 
 (defn unit 
-  ([name] 
+  (^ic.engine.Unit [name] 
 	  (if-let [type (unit-type-map name)]
 		  type
 	    (throw (Error. (str "Unit type not found: " name)))))
-  ([name props]
+  (^ic.engine.Unit [name props]
     (merge (unit name) props)))
 
-(defn random-unit []
-  (let [name (rand-choice (keys unit-type-map))] 
-    (unit name)))
+(defn random-unit 
+  (^ic.engine.Unit []
+    (let [name (rand-choice (keys unit-type-map))] 
+      (unit name))))

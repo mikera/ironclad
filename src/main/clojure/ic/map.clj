@@ -6,6 +6,7 @@
   (:require [clojure.set]) 
   (:import [mikera.engine.Hex])
   (:import [mikera.math.Bounds4i])
+  (:import [mikera.persistent.SparseMap])
   (:import [java.awt Color]))
 
 (set! *warn-on-reflection* true)
@@ -24,9 +25,10 @@
   (def TERRAINTYPE_IMPASSABLE "Impassable")])
 
 ; locations and points
+(declare adjacents)
 
 ; Concrete type to implement a set of points
-(deftype PointSet [#^clojure.lang.IPersistentSet pointset]
+(deftype PointSet [^clojure.lang.IPersistentSet pointset]
   PLocationSet
     (get-points [p] pointset)
     (union [p q]  
@@ -43,34 +45,33 @@
     (more [p] (rest pointset))
     (cons [p x] (cons x pointset)))
 
-(defn location? 
-  ([x] (satisfies? PLocation x)))
-
 ; Concrete type to represent a point location
 (deftype Point [^long x ^long y]
-  PLocation
-    (get-x ^long [p] x)
-    (get-y ^long [p] y) 
-    (add ^Point [p q] 
-      (let [x2 (get-x q)
-            y2 (get-y q)]
-        (Point. (+ x x2) (+ y y2))))
-    (adjacents [p]
-      (PointSet. 
-        (areduce
-          mikera.engine.Hex/HEX_DX 
-          i 
-          pts 
-          #{} 
-          (conj pts (Point. 
-                    (+ x (aget mikera.engine.Hex/HEX_DX i))
-                    (+ y (aget mikera.engine.Hex/HEX_DY i)))))))
   Object
     (toString [self] (str "(" x "," y ")"))
     (hashCode [self] (unchecked-add x (Integer/rotateRight y 16)))
-    (equals [self b] (and (satisfies? PLocation b) (= x (get-x b)) (= y (get-y b)))))
+    (equals [self b] 
+            (if (instance? Point b) 
+              (let [b ^Point b] (and (= x (.x b)) (= y (.y b)))) 
+              false)))
 
+(defn get-x ^long [^Point p] (.x p))
 
+(defn get-y ^long [^Point p] (.y p)) 
+
+(defn add ^Point [^Point p ^Point q] 
+  (Point. (+ (.x p) (.x q)) (+ (.y p) (.y q))))
+
+(defn adjacents [^Point p]
+  (PointSet. 
+    (areduce
+      mikera.engine.Hex/HEX_DX 
+      i 
+      pts 
+      #{} 
+      (conj pts (Point. 
+                (+ (.x p) (aget mikera.engine.Hex/HEX_DX i))
+                (+ (.y p) (aget mikera.engine.Hex/HEX_DY i)))))))
 
 (defn adjacent-point-list 
   ([^long x ^long y]
@@ -123,43 +124,45 @@
 
 ; Map functions
  
-(defn new-map ^mikera.persistent.SparseMap [] 
+(defn new-map [] 
   (mikera.persistent.SparseMap.))
 
-(extend-type mikera.persistent.SparseMap
-  PMap 
-    (mget [m x y]
-      (.get m (int x) (int y)))
-    (mset [m x y v]
-      (.update m (int x) (int y) v))
-    (mvisit [m f]
-      (.visit 
-        m 
-        (proxy [mikera.persistent.SparseMap$Visitor] []
-          (call [x y value param]
-            (f x y value)
-            false))
-        nil))
-    (mmap [m f]
-      (let [a (atom m)]
-	      (.visit 
-	        m 
-	        (proxy [mikera.persistent.SparseMap$Visitor] []
-	          (call [x y value a]
-	            (swap! a mset x y (f value))
-	            false))
-	        a)
-        @a))
-    (mmap-indexed [m f]
-      (let [a (atom m)]
-        (.visit 
-          m 
-          (proxy [mikera.persistent.SparseMap$Visitor] []
-            (call [x y value a]
-              (swap! a mset x y (f x y value))
-              false))
-          a)
-        @a)))
+(defn mget [^mikera.persistent.SparseMap m ^long x ^long y]
+  (.get m (int x) (int y)))
+	
+(defn mset [^mikera.persistent.SparseMap m ^long x ^long y v]
+  (.update m (int x) (int y) v))
+
+(defn mvisit [^mikera.persistent.SparseMap m f]
+  (.visit 
+    m 
+    (proxy [mikera.persistent.SparseMap$Visitor] []
+      (call [x y value param]
+        (f x y value)
+        false))
+    nil))
+
+(defn mmap ^mikera.persistent.SparseMap [^mikera.persistent.SparseMap m f]
+  (let [a (atom m)]
+    (.visit 
+      m 
+      (proxy [mikera.persistent.SparseMap$Visitor] []
+        (call [x y value a]
+          (swap! a mset x y (f value))
+          false))
+      a)
+    @a))
+
+(defn mmap-indexed ^mikera.persistent.SparseMap [^mikera.persistent.SparseMap m f]
+  (let [a (atom m)]
+    (.visit 
+      m 
+      (proxy [mikera.persistent.SparseMap$Visitor] []
+        (call [x y value a]
+          (swap! a mset x y (f x y value))
+          false))
+      a)
+    @a))
 
 (defn random-point [^mikera.persistent.SparseMap m]
   (let [^mikera.math.Bounds4i bds (.getNonNullBounds m)]
@@ -364,36 +367,3 @@
       (mset 0 1 (terrain "Sea")))))
 
 
-; Tests
-(deftest t1
-  (let [m (mset (new-map) 2 2 (terrain "Grassland"))
-        p (point 2 3)]
-    (is (= (point 2 2) (random-point m)))
-    (is (= (terrain "Grassland") (mget m 2 2)))
-    (is (= 100 (:move-cost-multiplier (terrain "Grassland"))))
-    (is (= (.x p) 2))
-    (is (= (.y p) 3))))
-
-(deftest tmap
-  (let [m (mset (new-map) 2 3 (terrain "Grassland"))]
-    (is (= m (mmap m identity)))
-    (is (= "Foobar" (mget (mmap m (fn [v] "Foobar")) 2 3)))
-    (is (= "Foobar23" (mget (mmap-indexed m (fn [x y v] (str "Foobar" x y))) 2 3)))))
-
-(deftest t11
-  (let [p (point 2 3)
-        ps (adjacent-point-list p)]
-    (is (= 6 (count ps)))
-    (is (some #(= (point 3 3) %) ps ))))
-
-(deftest t2
-  (let [p (point 2 3)
-        q (point 2 3)
-        r (point 3 2)]
-    (is (satisfies? PLocation p))
-    (is (= (get-x p) 2))
-    (is (= (get-y p) 3))
-    (is (= p p))
-    (is (= p q))
-    (is (= ({p 1} q) 1))
-    (is (= ({r 1} q) nil))))

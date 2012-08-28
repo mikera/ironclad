@@ -9,23 +9,6 @@
   (^javax.swing.Icon ability-icon [ability])
   (^String nameString [ability unit]))
 
- 
-(defprotocol PMap
-  "Abstraction for hexagonal map"
-  (mget [m ^long x ^long y])
-  (mset [m ^long x ^long y v])
-  (mvisit [m f])
-  (mmap [m f])
-  (mmap-indexed [m f]))
-
-
-(defprotocol PLocation
-  "Abstraction for hexagonal map locations"
-  (get-x ^long [p])
-  (get-y ^long [p])
-  (add [p q])
-  (adjacents [p]))
-
 (defprotocol PLocationSet
   "Abstraction for sets of locations"
   (get-points [p])

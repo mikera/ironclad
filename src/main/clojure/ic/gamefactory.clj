@@ -1,25 +1,21 @@
 (ns ic.gamefactory
-  (:use [ic.protocols])
+  (:use [ic protocols engine map units game])
   (:use [clojure.test])
   (:use [mc.util])
   (:import [mikera.engine Hex])
-  (:import [mikera.util Rand])
-  (:require [ic.map])
-  (:require [ic.player])
-  (:require [ic.game])
-  (:require [ic.units]))
+  (:import [mikera.util Rand]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* true)
 
 (def blank-map 
-  (ic.map/new-map))
+  (new-map))
 
 (def ^:const DEFAULT_MAP_SIZE 20)
 
 (defn find-point [g pred] 
   (loop [i 1000]
-    (let [^ic.map.Point pt (ic.map/random-point (:terrain g))]
+    (let [^ic.engine.Point pt (random-point (:terrain g))]
       (if (pred (.x pt) (.y pt))
         pt
         (if (> i 0)
@@ -27,15 +23,15 @@
           nil)))))
 
 (defn add-unit-random-position [g side u]
-  (let [^ic.map.Point pt (find-point 
+  (let [^ic.engine.Point pt (find-point 
               g 
               (fn [x y] 
                 (and 
                   (nil? (get-unit g x y))
-                  (ic.units/suitable-terrain u (get-terrain g x y)))))
+                  (suitable-terrain u (get-terrain g x y)))))
         new-unit (merge u 
                    {:side side
-                    :player-id (:id (ic.game/get-player-for-side g side))})]
+                    :player-id (:id (get-player-for-side g side))})]
     (if (nil? pt)
       g
       (-> g 
@@ -43,19 +39,19 @@
 
 (defn add-units [g]
   (-> g
-    (add-unit-random-position 0 (ic.units/unit "Fortress Turret"))
-    (add-unit-random-position 0 (ic.units/unit "Assault Zeppelin"))
-    (add-unit-random-position 0 (ic.units/unit "Patrol Boat"))
-    (add-unit-random-position 0 (ic.units/unit "Artillery Tank"))
-    (add-unit-random-position 0 (ic.units/unit "Paddle Cruiser"))
-    (add-unit-random-position 0 (ic.units/unit "Construction Crawler"))
-    (add-unit-random-position 0 (ic.units/unit "Rifles"))
-    (add-unit-random-position 0 (ic.units/unit "Steam Tank"))
-    (add-unit-random-position 1 (ic.units/unit "Construction Crawler"))
-    (add-unit-random-position 1 (ic.units/unit "Battle Tank"))
-    (add-unit-random-position 1 (ic.units/unit "Rifles"))
-    (add-unit-random-position 1 (ic.units/unit "Rifles"))
-    (add-unit-random-position 1 (ic.units/unit "Rifles"))))
+    (add-unit-random-position 0 (unit "Fortress Turret"))
+    (add-unit-random-position 0 (unit "Assault Zeppelin"))
+    (add-unit-random-position 0 (unit "Patrol Boat"))
+    (add-unit-random-position 0 (unit "Artillery Tank"))
+    (add-unit-random-position 0 (unit "Paddle Cruiser"))
+    (add-unit-random-position 0 (unit "Construction Crawler"))
+    (add-unit-random-position 0 (unit "Rifles"))
+    (add-unit-random-position 0 (unit "Steam Tank"))
+    (add-unit-random-position 1 (unit "Construction Crawler"))
+    (add-unit-random-position 1 (unit "Battle Tank"))
+    (add-unit-random-position 1 (unit "Rifles"))
+    (add-unit-random-position 1 (unit "Rifles"))
+    (add-unit-random-position 1 (unit "Rifles"))))
 
 ;(defn draw-terrain-line [g terrain-function sx sy tx ty]
 ;  (if (and (= sx tx) (= sy ty))
@@ -105,9 +101,9 @@
 (defn make-map-using-function 
   ([] (make-map-using-function 13))
   ([size]
-    (make-map-using-function size (fn [x y] (ic.map/rand-terrain))))
+    (make-map-using-function size (fn [x y] (rand-terrain))))
   ([size function-xy] 
-	  (let [m (ic.map/new-map)]
+	  (let [m (new-map)]
 	    (reduce
 	      (fn [m [x y]] (mset m x y (function-xy x y)))
 	      m
@@ -153,7 +149,7 @@
     2
     (mmap region-map 
       (fn [{terrain-types :terrain-types}]
-        (ic.map/terrain (rand-choice terrain-types))))))
+        (terrain (rand-choice terrain-types))))))
 
 (defn cut-map
   ([source size]
@@ -172,35 +168,35 @@
 (defn add-default-players [game]
   (-> game
     (add-player 
-      (ic.player/player 
+      (player 
         {:name "Albion"
          :side 0 
          :is-human true 
          :ai-controlled false}))
     (add-player 
-      (ic.player/player 
+      (player 
         {:name "Krantz"
          :side 1 
          :ai-controlled true}))
     (add-player 
-      (ic.player/player
+      (player
         {:name "Mekkai"
          :side 2 
          :ai-controlled false}))
     (add-player 
-      (ic.player/player 
+      (player 
         {:name "Rebels"
          :side 3 
          :ai-controlled true}))))
 
 (defn random-terrain-game [size]
-  (-> (ic.game/new-game) 
+  (-> (new-game) 
     (assoc :terrain (make-map size))
     (add-default-players)))
 
 ; random challenge game
 (defn random-challenge-game []
-  (-> (ic.game/new-game) 
+  (-> (new-game) 
     (assoc :terrain (make-map DEFAULT_MAP_SIZE))
     (add-default-players)
     (#(reduce 
@@ -216,14 +212,14 @@
 (defn make-game 
   ([] (make-game DEFAULT_MAP_SIZE))
   ([size] 
-	  (-> (ic.game/new-game) 
+	  (-> (new-game) 
 	    (assoc :terrain (make-map size))
 	    (add-default-players)
 	    (add-units))))
 
 
 (def test-map
-  (let [m (ic.map/new-map)]
+  (let [m (new-map)]
 	  (reduce
 	    (fn [m [x y]] 
         (mset m x y (ic.map/terrain "Grassland")))
@@ -231,25 +227,3 @@
 	    (for [x (range 0 10) 
 	          y (range 0 10)] 
         [x y]))))
-
-(defn test-game []
-  (let [g (ic.game/new-game)] 
-	  (-> g 
-	    (assoc :terrain test-map)
-	    (add-player 
-	      (ic.player/player
-	        {:side 0 
-	         :is-human true 
-	         :ai-controlled false})))))
-
-
-(deftest t2
-  (let [tg (test-game)
-        u (ic.units/unit "Steam Tank" {:player-id (:id (ic.game/get-player-for-side tg 0))})
-        g (-> tg
-            (add-unit 2 2 u))]
-    (is (not (nil? (get-unit g 2 2))))
-    (is (not (nil? (first (:players g)))))
-    (is (> (:aps u) 0 ))
-    (is (= 1 (ic.units/move-cost g u 2 2 2 3)))
-    (ic.game/validate-game g)))

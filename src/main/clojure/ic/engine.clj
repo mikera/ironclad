@@ -197,7 +197,9 @@
 ;; ====================================================================
 ;; player data structure and functions
 
-(defrecord Player [])
+(defrecord Player []
+    PValidatable
+	   (validate [p]))
 
 (def default-player-data 
   {:name "No name"
@@ -244,7 +246,17 @@
 			(+ (sourcex u) UNIT_ICON_CLIP) 
 			(+ (sourcey u) UNIT_ICON_CLIP) 
 			(- (sourcew u) (* 2 UNIT_ICON_CLIP)) 
-			(- (sourceh u) (* 2 UNIT_ICON_CLIP)))))
+			(- (sourceh u) (* 2 UNIT_ICON_CLIP))))
+   PValidatable
+  		(validate [u]
+			  (assert (>= (:aps u) 0))
+			  (assert (instance? Long (:aps u)))
+			  (assert (instance? Long (:hps u)))
+			  (let [contents (:contents u)]
+			    (assert (>= (count contents) 0))
+			    (doseq [c contents]
+			      (assert (nil? (:id c)))))
+			  true))
 
 
 ;; ====================================================================
@@ -253,6 +265,7 @@
 (declare new-unit-id)
 (declare get-terrain)
 (declare set-terrain)
+(declare get-unit)
 
 (defrecord Game 
   []
@@ -277,7 +290,25 @@
         (.get players player-id)))
 
     (get-unit-map [g]
-      (:units g)))
+      (:units g))
+  PValidatable
+	  (validate [g]
+		  (let [^mikera.persistent.IntMap unit-locs (:unit-locations g)
+		        ^mikera.persistent.SparseMap units (:units g)
+		        players ^mikera.persistent.IntMap (:players g)]
+			  (doseq [[uid ^ic.engine.Point loc] unit-locs]
+			    (let [u (get-unit g (.x loc) (.y loc))
+		            player-id (:player-id u)]
+				    (assert (instance? ic.engine.Point loc))
+				    (assert (= uid (:id u)))
+			      (assert (not (nil? player-id)))
+		        (assert (not (nil? (.get players player-id))))
+            (validate u)))
+			  (doseq [[pid player] (:players g)]
+			    (let []
+			      (assert (= pid (:id player)))
+            (validate player))))
+		  true))
 
 (defn location-of-unit ^Point [^Game g u]
   (.get ^mikera.persistent.IntMap (:unit-locations g) (:id u)))

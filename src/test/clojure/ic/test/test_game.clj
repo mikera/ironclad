@@ -20,7 +20,7 @@
     (is (= [0] (active-sides g)))
     (is (not (nil? (get-unit g 2 2))))
     (is (nil? (get-unit (remove-unit g 2 2) 2 2)))
-    (validate-game g)
+    (validate g)
     (ai-evaluation ng player)))
 
 (deftest t-terrain

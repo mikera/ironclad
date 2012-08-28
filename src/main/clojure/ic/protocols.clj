@@ -47,6 +47,9 @@
   (draw [c ^Graphics g ^long x ^long y elv])
   (apply-to-gui [c])
   (get-command [c]))
+
+(defprotocol PValidatable
+  (validate [x]))
  
 
 

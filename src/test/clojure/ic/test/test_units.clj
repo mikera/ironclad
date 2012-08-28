@@ -17,7 +17,7 @@
     (is (not (nil? type)))
     (is (not (nil? (:abilities u))))
     (is (not (nil? (find-ability u "6\" Steam Cannon"))))
-    (validate-unit u)))
+    (validate u)))
 
 (defn test-abilities [u a]
   (if (:is-build a)

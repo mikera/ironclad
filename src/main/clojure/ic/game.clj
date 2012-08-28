@@ -381,20 +381,5 @@
       (list (msg-next-turn)))))
 
 
-(defn validate-game [g]
-  (let [^mikera.persistent.IntMap unit-locs (:unit-locations g)
-        ^mikera.persistent.SparseMap units (:units g)
-        players ^mikera.persistent.IntMap (:players g)]
-	  (doseq [[uid ^ic.engine.Point loc] unit-locs]
-	    (let [u (get-unit g (.x loc) (.y loc))
-            player-id (:player-id u)]
-		    (assert (instance? ic.engine.Point loc))
-		    (assert (= uid (:id u)))
-	      (assert (not (nil? player-id)))
-        (assert (not (nil? (.get players player-id))))
-		    (assert (ic.units/validate-unit u))))
-	  (doseq [[pid player] (:players g)]
-	    (let []
-	      (assert (= pid (:id player))))))
-  true)
+
 

@@ -169,7 +169,7 @@
   (let [terrain (get-terrain game tx ty)
         tu (get-unit game tx ty)
         unit-move-type (:move-type unit)]
-    (cond 
+    (double (cond 
       (nil? terrain)
         0
       (= unit-move-type MOVETYPE_FLY)
@@ -188,8 +188,8 @@
 	        (if (<= base-cost 0)
 	          0
 		        (+
-		          (/ (unchecked-multiply base-cost multiplier) 10000.0)
-		          (zoc-cost game unit sx sy tx ty)))))))
+		          (/ (* base-cost multiplier) 10000)
+		          (zoc-cost game unit sx sy tx ty))))))))
 
 (defn suitable-terrain [unit terrain]
   (or 
@@ -1610,15 +1610,6 @@
      {} 
      unit-types))
 
-(defn validate-unit [u]
-  (assert (>= (:aps u) 0))
-  (assert (instance? Long (:aps u)))
-  (assert (instance? Long (:hps u)))
-  (let [contents (:contents u)]
-    (assert (>= (count contents) 0))
-    (doseq [c contents]
-      (assert (nil? (:id c)))))
-  true)
 
 (defn unit 
   (^ic.engine.Unit [name] 

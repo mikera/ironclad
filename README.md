@@ -1,4 +1,4 @@
-ironclad
+Ironclad
 ========
 
 Ironclad: Steam Legions - A steampunk strategy game in Clojure

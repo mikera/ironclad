@@ -26,25 +26,25 @@
 
 (defprotocol PDrawable
   "Abstraction for drawable"
-  (sourcex ^long [d])
-  (sourcey ^long [d])
-  (sourcew ^long [d])
-  (sourceh ^long [d])
-  (centrex ^long [d])
-  (centrey ^long [d])
-  (source-image ^java.awt.image.BufferedImage [d])
-  (drawable-icon ^javax.swing.Icon [d]))
+  (sourcex [d])
+  (sourcey [d])
+  (sourcew [d])
+  (sourceh [d])
+  (centrex [d])
+  (centrey [d])
+  (source-image [d])
+  (drawable-icon [d]))
 
 
 (defprotocol PCommandState
   "State and transition management for the GUI command interface. Each event updates the command state. 
    When a command is complete it can be accessed with get-command"
-  (left-click [c ^long x ^long y])
-  (right-click [c ^long x ^long y])
-  (mouse-dragged [c ^long x ^long y left-button-down right-button-down])
+  (left-click [c x y])
+  (right-click [c x y])
+  (mouse-dragged [c x y left-button-down right-button-down])
   (list-click [c v])
-  (update-command-state [c ^Game g])
-  (draw [c ^Graphics g ^long x ^long y elv])
+  (update-command-state [c g])
+  (draw [c g x y elv])
   (apply-to-gui [c])
   (get-command [c]))
 

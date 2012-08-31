@@ -30,9 +30,6 @@
     (actionPerformed [^ActionEvent e]
       (f))))
 
-
-
-
 (defn ^JPanel panelize [^JComponent comp]
   (doto 
     (JPanel.)

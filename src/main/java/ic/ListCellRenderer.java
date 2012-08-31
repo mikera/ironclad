@@ -3,9 +3,6 @@ package ic;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
-
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
@@ -13,9 +10,8 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
 import mikera.ui.JIcon;
-import mikera.ui.steampunk.PlatePanel;
-import net.miginfocom.swing.MigLayout;
 
+@SuppressWarnings({ "serial", "rawtypes" })
 public class ListCellRenderer extends JPanel implements
 		javax.swing.ListCellRenderer {
 

@@ -1,14 +1,10 @@
 (ns ic.dialogs
-  (:use [ic.protocols])
+  (:use [ic protocols engine map units game gamefactory])
   (:use [mc.util])
   (:require [mc.resource])
   (:require [mc.ui])
-  (:require [ic.game])
   (:require [ic.frame])
   (:use [ic.command])
-  (:require [ic.gamefactory])
-  (:require [ic.map])
-  (:require [ic.units])
   (:import (javax.swing JScrollPane JCheckBox JTabbedPane JDialog ListSelectionModel JList JTextPane SwingUtilities DefaultListModel JFrame JSeparator JComponent JList JTextField JTextArea JButton JPanel BoxLayout BorderFactory Timer)
            (java.awt.event ActionListener ActionEvent WindowAdapter WindowEvent MouseAdapter MouseMotionAdapter MouseEvent)
            (java.net URL)
@@ -22,13 +18,13 @@
 
 (declare save-tab-paint-settings)
 
-(defn unit-selection-list-model [units disable-reasons] ^DefaultListModel 
+(defn unit-selection-list-model ^DefaultListModel [units disable-reasons]  
   (let [^DefaultListModel model (DefaultListModel.)]
     (dotimes [i (count units)]
       (let [uval (nth units i)
             dr (nth disable-reasons i)
             unit-name (if (string? uval) uval (:name uval))
-            unit (if (string? uval) (ic.units/unit unit-name) uval)]
+            unit (if (string? uval) (unit unit-name) uval)]
 	      (.addElement model
 	        (ic.ListCellData. 
 	          (drawable-icon unit) 
@@ -399,7 +395,7 @@
 	    (.add unit-list BorderLayout/CENTER)
 	    (.add side-list BorderLayout/WEST))))
 
-(def paint-dialog ^JDialog
+(def ^JDialog paint-dialog 
   (let [^JDialog dialog (JDialog. ic.frame/frame)
         tabbed-pane (JTabbedPane.)]
     (doto tabbed-pane

@@ -1,5 +1,5 @@
 (ns ic.renderer
-  (:use [ic.protocols])
+  (:use [ic protocols engine])
   (:use [mc.util])
   (:require [mc.resource])
   (:require [mc.ui])
@@ -13,24 +13,24 @@
   (:import (mikera.engine Hex)))
 
 ; Constants
-(def RATIO (float (/ (Math/sqrt 3) 2))) ; x ratio for hex tile offset
-(def TILESIZE (int 128)) ; size of each tile
-(def HALF_TILESIZE (int (* TILESIZE 0.5))) ; half size of each tile
-(def X_OFFSET (int (* TILESIZE RATIO 0.5)))
-(def Y_OFFSET (int (* TILESIZE 0.5 0.87)))
-(def Y_OFFSET_X (int(* Y_OFFSET 0.5)))
+(def ^:const RATIO (double (/ (Math/sqrt 3) 2))) ; x ratio for hex tile offset
+(def ^:const TILESIZE 128) ; size of each tile
+(def ^:const HALF_TILESIZE (long (* TILESIZE 0.5))) ; half size of each tile
+(def ^:const X_OFFSET (long (* TILESIZE RATIO 0.5)))
+(def ^:const Y_OFFSET (long (* TILESIZE 0.5 0.87)))
+(def ^:const Y_OFFSET_X (long (* Y_OFFSET 0.5)))
 
-(def Y_OFFSET_HEIGHT (int 3))
+(def ^:const Y_OFFSET_HEIGHT (long 3))
 
-(def MAP_ZOOM 1.0)
+(def ^:const MAP_ZOOM 1.0)
 
-(def OPTION_DRAW_STATUS true)
+(def ^:const OPTION_DRAW_STATUS true)
 
 
 ; length of specific animation sequences in millis
-(def MOVE_ANIMATION_MILLIS (long 800))
-(def SHOOT_ANIMATION_MILLIS (long 500))
-(def SMOKE_ANIMATION_MILLIS (long 5000))
+(def ^:const MOVE_ANIMATION_MILLIS 800)
+(def ^:const SHOOT_ANIMATION_MILLIS 500)
+(def ^:const SMOKE_ANIMATION_MILLIS 5000)
 
 
 ; screen coordinate functions
@@ -101,7 +101,7 @@
     (.setFont g ic.graphics/mini-font)
     (mikera.ui.Draw/drawCentredText g (str apcost) tx ty)))
 
-(defn draw-hex-terrain [^Graphics g x y scrollx scrolly  elv ^Terrain t]
+(defn draw-hex-terrain [^Graphics g x y scrollx scrolly  elv ^ic.engine.Terrain t]
   (let [
         tx (- (screenx x y) scrollx (centrex t))
         ty (- (screeny x y) scrolly (centrey t) elv)
@@ -148,7 +148,7 @@
       (anim-pos 10 3))
     java.awt.Color/GRAY))
 
-(defn draw-unit-status [^Graphics g tx ty ^Unit u]
+(defn draw-unit-status [^Graphics g tx ty ^ic.engine.Unit u]
     (let [bx (+ tx (centrex u))
           by (+ ty (centrey u) BAR_Y_OFFSET)
           hps (:hps u)
@@ -182,13 +182,13 @@
             (.setColor g Color/YELLOW)
             (mikera.ui.Draw/drawCentredText g (str "[" cc "]") (+ tx 50) (+ ty 10)))))))
 
-(defn draw-unit [^Graphics g x y ^int elv ^Unit u]
-  (let [tx (- (screenx x y) (centrex u))
-        ty (- (screeny x y) (centrey u) elv)
-        sx (sourcex u)
-        sy (sourcey u)
-        sw (sourcew u)
-        sh (sourceh u)
+(defn draw-unit [^Graphics g x y elv ^ic.engine.Unit u]
+  (let [tx (int (- (screenx x y) (centrex u)))
+        ty (int (- (screeny x y) (centrey u) elv))
+        sx (int (sourcex u))
+        sy (int (sourcey u))
+        sw (int (sourcew u))
+        sh (int (sourceh u))
         bx (+ tx (centrex u))
         by (+ ty (centrey u) BAR_Y_OFFSET)
 
@@ -207,13 +207,13 @@
       (draw-unit-status g tx ty u))))
 
 
-(defn check-adjacent-terrain [^PGame game x y i pred]
+(defn check-adjacent-terrain [game x y i pred]
   (let [t (get-terrain game (+ x (Hex/dx i)) (+ y (Hex/dy i)))]
     (if t
       (pred t)
       nil)))
 
-(defn check-adjacent-terrain-with-opposite [^PGame game x y i pred]
+(defn check-adjacent-terrain-with-opposite [game x y i pred]
   (let [t (get-terrain game (+ x (Hex/dx i)) (+ y (Hex/dy i)))]
     (if t
       (pred t)
@@ -224,10 +224,10 @@
           nil)))))
 
 
-(defn draw-hex-decorations [^Graphics g ^PGame game x y scrollx scrolly  elv ^Terrain t]
+(defn draw-hex-decorations [^Graphics g game x y scrollx scrolly  elv t]
   (let [has-road (:has-road t)
         has-rail (:has-rail t)
-        TSIZE ic.map/TERRAIN_SIZE
+        TSIZE TERRAIN_SIZE
         tx (- (screenx x y) scrollx (/ TSIZE 2))
         ty (- (screeny x y) scrolly (/ TSIZE 2) Y_OFFSET_HEIGHT)
         sx (* 8 TSIZE)
@@ -297,7 +297,7 @@
 
 ; Overall map drawing
 
-(defn draw-hex [^Graphics g ^PGame game x y scrollx scrolly]
+(defn draw-hex [^Graphics g game x y scrollx scrolly]
   (let [t (mget (:terrain game) x y)
         u (mget (:units game) x y)
         elv (if t (* Y_OFFSET_HEIGHT (:elevation t)) 0)]
@@ -306,7 +306,7 @@
         (draw-hex-terrain g x y scrollx scrolly elv t)
         (draw-hex-decorations g game x y scrollx scrolly elv t)))))
 
-(defn draw-hex-objects [^Graphics g ^PGame game x y ^PCommandState cs]
+(defn draw-hex-objects [^Graphics g game x y cs]
   (let [t (mget (:terrain game) x y)
         u (mget (:units game) x y)
         elv (if t (* Y_OFFSET_HEIGHT (:elevation t)) 0)]
@@ -315,13 +315,13 @@
         (draw-unit g x y elv u))
       (draw cs g x y elv))))
 
-(defn draw-map [^Graphics g  ^PGame game xmin ymin xmax ymax scrollx scrolly]
+(defn draw-map [^Graphics g  game xmin ymin xmax ymax scrollx scrolly]
   (let []
     (dotimes [iy (- ymax ymin)]
       (dotimes [ix (- xmax xmin)]
         (draw-hex g game (+ ix xmin) (+ iy ymin) scrollx scrolly)))))
 
-(defn draw-units [^Graphics g  ^PGame game xmin ymin xmax ymax ^PCommandState cs]
+(defn draw-units [^Graphics g game xmin ymin xmax ymax cs]
   (let []
     (dotimes [iy (- ymax ymin)]
       (dotimes [ix (- xmax xmin)]
@@ -331,7 +331,7 @@
 ; Animation handling
 
 
-(defn create-animation-list [^PGame game update]
+(defn create-animation-list [game update]
   "Creates the animation list (possibly nil) for a given game update"
   (let [anim (:animation update)]
     (if (nil? anim)
@@ -403,7 +403,7 @@
         animation-name (:animation-name anim)
         start-time (:start-time anim)
         ; p (println (str "do-animation times " time " - " start-time))
-        elapsed (int (- time start-time))]
+        elapsed (long (- time start-time))]
     (if (< elapsed 0)
       anim ; not yet ready to display
       (case animation-name
@@ -411,13 +411,13 @@
           (if (>= elapsed 640) 
             nil 
             (do 
-              (draw-animated-icon g (:tx anim) (:ty anim) (:iy anim) (unchecked-divide elapsed 80))
+              (draw-animated-icon g (:tx anim) (:ty anim) (:iy anim) (quot elapsed 80))
               anim))
         "Smoke"
           (if (>= elapsed SMOKE_ANIMATION_MILLIS) 
             nil 
             (do 
-              (draw-animated-icon g (:tx anim) (:ty anim) (:iy anim) (unchecked-divide elapsed 80))
+              (draw-animated-icon g (:tx anim) (:ty anim) (:iy anim) (quot elapsed 80))
               anim))
         "Move"
           (if (>= elapsed MOVE_ANIMATION_MILLIS) 
@@ -428,8 +428,8 @@
                   hexes-moved (* n percent)
                   i (int hexes-moved)
                   fraction-of-hex (- hexes-moved i)
-                  ^ic.map.Point pos (nth moves i)
-                  ^ic.map.Point npos (nth moves (inc i))
+                  ^ic.engine.Point pos (nth moves i)
+                  ^ic.engine.Point npos (nth moves (inc i))
                   dir (mikera.engine.Hex/direction (.x pos) (.y pos) (.x npos) (.y npos))
                   aunit (:unit anim)
                   unit (if (= dir (:dir aunit)) aunit (assoc aunit :dir dir))]
@@ -499,7 +499,7 @@
         (throw (Error. (str "Unrecognised animation: " animation-name)))))))
       
 
-(defn draw-animations [^Graphics g ^PGame game]
+(defn draw-animations [^Graphics g game]
   (let [anim-list (vals @animations)
        next-animations (reduce 
                      (fn [anims anim] 
@@ -509,7 +509,7 @@
                      anim-list)]
     (reset! animations next-animations)))
 
-(defn draw-all-objects [g game xmin ymin xmax ymax ^PCommandState cs]
-  (draw-units g game xmin ymin xmax ymax cs)
+(defn draw-all-objects [g game xmin ymin xmax ymax command-state]
+  (draw-units g game xmin ymin xmax ymax command-state)
   (draw-animations g game))
 

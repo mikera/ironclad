@@ -7,6 +7,7 @@ import java.awt.Graphics;
 import java.awt.Label;
 
 
+@SuppressWarnings("serial")
 public class IronClad extends JApplet {
 
 	public static JApplet applet=null;

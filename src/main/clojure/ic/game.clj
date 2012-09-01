@@ -4,7 +4,7 @@
   (:use [ic.command])
   (:require [mc.util])
   (:import [mikera.persistent.SparseMap])
-  (:import [mikera.persistent.IntMap])
+  (:import [mikera.persistent.LongMap])
   (:import [mikera.util.Rand])
   (:use [mc.util])
   (:use [clojure.test]))
@@ -42,7 +42,7 @@
   (find-first
     (fn [player]
       (= (:side player) side))
-    (.values ^mikera.persistent.IntMap (:players g))))
+    (.values ^mikera.persistent.LongMap (:players g))))
 
 (defn side-has-human? [g side]
   (some (fn [[i p]] (and (= side (:side p)) (:is-human p))) (:players g)))
@@ -71,7 +71,7 @@
           :units
           (let [units (:units g)
                 uid (:uid update)
-                ^ic.engine.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
+                ^ic.engine.Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))
                 x (.x pos)
                 y (.y pos)
                 unit (get-unit g x y)
@@ -82,15 +82,15 @@
           :units
           (let [units (:units g)
                 uid (:uid update)
-                ^ic.engine.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
+                ^ic.engine.Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))
                 x (.x pos)
                 y (.y pos)
                 unit (get-unit g x y)
                 updated-unit (merge unit (:properties update))]
             (mset units x y updated-unit)) )
       "Player properties"
-        (let [players ^mikera.persistent.IntMap (:players g)
-              pid (int (:player-id update))
+        (let [players ^mikera.persistent.LongMap (:players g)
+              pid (long (:player-id update))
               player (.get players pid)
               props (:properties update)]
           (assoc g :players 
@@ -98,7 +98,7 @@
       "Remove unit"
         (let [units (:units g)
               uid (:uid update)
-              ^ic.engine.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
+              ^ic.engine.Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))
               tx (.x pos)
               ty (.y pos)]
             (-> g
@@ -121,13 +121,13 @@
             ((fn [game] 
                (assoc game :players
                  (reduce
-                   (fn [^mikera.persistent.IntMap np [player-id player]]
-                     (.include np (int player-id) (assoc player :ai-evaluation (ai-evaluation game player))))
-                   mikera.persistent.IntMap/EMPTY
+                   (fn [^mikera.persistent.LongMap np [player-id player]]
+                     (.include np (long player-id) (assoc player :ai-evaluation (ai-evaluation game player))))
+                   mikera.persistent.LongMap/EMPTY
                    (:players game))))))) 
       "Move unit"
         (let [uid (:uid update)
-              ^ic.engine.Point pos (.get ^mikera.persistent.IntMap (:unit-locations g) (int uid))
+              ^ic.engine.Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))
               sx (:sx update)
               sy (:sy update)
               tx (:tx update)
@@ -182,7 +182,7 @@
 (defn handle-command-event [g command]
   "Handle a command event to a single unit"
   (let [{ cmd :command-type  uid :uid abname :ability  tx :tx ty :ty player-id :player-id} command
-        sp ^ic.engine.Point (.get ^mikera.persistent.IntMap (:unit-locations g) uid)]
+        sp (location-of-unit g uid)]
     ;(println event)
     (cond 
       (nil? sp)
@@ -307,7 +307,7 @@
 
   ([g unit-pred]
     "Gets a list of all ai-commands for the given game"
-    (let [^mikera.persistent.IntMap unit-locs (:unit-locations g)
+    (let [^mikera.persistent.LongMap unit-locs (:unit-locations g)
           ^mikera.persistent.SparseMap units (:units g)]
       ;(println event)
       (mapcat
@@ -315,7 +315,7 @@
           (let [x (.x pos)
                 y (.y pos)
                 u (mget units x y)
-                player (.get ^mikera.persistent.IntMap (:players g) (int (:player-id u)))] 
+                player (.get ^mikera.persistent.LongMap (:players g) (long (:player-id u)))] 
             (if 
               (and 
                 (:ai-controlled player)
@@ -348,7 +348,7 @@
 (defn handle-turn-event [g event]
   "Handles the End of Turn event"
   (let [{ cmd :command-type } event
-        ^mikera.persistent.IntMap unit-locs (:unit-locations g)
+        ^mikera.persistent.LongMap unit-locs (:unit-locations g)
         resource-tally (atom {})]
     ;(println event)
     ; TODO: fix base time update

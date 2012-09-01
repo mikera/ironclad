@@ -15,6 +15,7 @@
             (add-unit 2 2 u)
             (add-unit 3 3 u2))]
     (is (not (nil? u)))
+    (is (= player (get-player g player-id)))
     (is (side-has-human? g 0))
     (is (not (side-has-human? g 1)))
     (is (= [0] (active-sides g)))

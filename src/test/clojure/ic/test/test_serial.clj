@@ -21,7 +21,7 @@
             :c nil
             :cc 2
             :d (new-map)
-            :e (mikera.persistent.IntMap/EMPTY)}]] 
+            :e (mikera.persistent.LongMap/EMPTY)}]] 
     (is (= m (decode (encode m))))
     (is (= m (deserialize (serialize m))))))
 
@@ -31,10 +31,10 @@
     (is (= {} (map-difference (deserialize (serialize m)) m)))
     (is (= m (deserialize (serialize m))))))
 
-(deftest test-intmap []
-  (let [m1 (mikera.persistent.IntMap/EMPTY)
+(deftest test-longmap []
+  (let [m1 (mikera.persistent.LongMap/EMPTY)
         m2 (.include m1 2 "Hello")
-        m3 (.include m2 3 (mikera.persistent.IntMap/EMPTY))] 
+        m3 (.include m2 3 (mikera.persistent.LongMap/EMPTY))] 
     (is (= m1 (decode (encode m1))))
     (is (= m2 (decode (encode m2))))
     (is (= m3 (decode (encode m3))))

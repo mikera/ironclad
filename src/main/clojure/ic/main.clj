@@ -239,9 +239,11 @@ Hints:
       (ic.interface/launch-window game-screen)
       (ic.sounds/play "Fanfare")))) 
 
+;; (run-all-tests (re-pattern "ic.*"))
+;; (run-all-tests (re-pattern "mc.*"))
+
 (do 
-  (run-all-tests (re-pattern "ic.*"))
-  (run-all-tests (re-pattern "mc.*"))
+  
   (main))
 
 (ns ic.interface)

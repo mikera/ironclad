@@ -30,7 +30,7 @@
              (for [ix (range tx (+ tx w))]
                (encode (.get s ix iy))))]))
 
-  mikera.persistent.IntMap 
+  mikera.persistent.LongMap 
     (encode [s] 
       ["IntMap"
        (reduce
@@ -163,11 +163,11 @@
     (new-map)
     rows))
 
-(defn decode-intmap [[dtype m]]
+(defn decode-longmap [[dtype m]]
   (reduce
-    (fn [^mikera.persistent.IntMap im [^Integer i v]]
-      (.include im (Integer/parseInt i) (decode v)))
-    (mikera.persistent.IntMap/EMPTY)
+    (fn [^mikera.persistent.LongMap im [i v]]
+      (.include im (Long/parseLong i) (decode v)))
+    (mikera.persistent.LongMap/EMPTY)
     m))
 
 (defn decode [data]
@@ -188,7 +188,7 @@
 		      (= "SparseMap" dtype)
 		        (decode-sparsemap data)
           (= "IntMap" dtype)
-            (decode-intmap data)
+            (decode-longmap data)
           (= "KW" dtype)
             (decode-keyword data)
           (= "I" dtype)

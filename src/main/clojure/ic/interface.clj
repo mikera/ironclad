@@ -4,7 +4,7 @@
   (:require [mc.resource])
   (:require [mc.ui])
   (:require [ic.ui])
-  (:require [ic.game])
+  (:use [ic engine game])
   (:require [ic.command])
   (:require [ic.dialogs])
   (:require [ic.gamefactory])
@@ -13,7 +13,7 @@
   (:require [ic.serial])
   (:require [ic.units])
   (:import (javax.swing JScrollPane JCheckBox JOptionPane JFileChooser JTextPane ListModel SwingUtilities DefaultListModel JFrame JSeparator JComponent JList JTextField JTextArea JButton JPanel BoxLayout BorderFactory Timer)
-           (java.awt.event ActionListener MouseAdapter MouseMotionAdapter MouseEvent)
+           (java.awt.event ActionListener ActionEvent MouseAdapter MouseMotionAdapter MouseEvent)
            (java.awt.image BufferedImage)
            (java.net URL)
            (java.io File)
@@ -24,6 +24,8 @@
            (mikera.ui.steampunk PanelBorder)
            (ic ListCellData)
            (net.miginfocom.swing MigLayout)))
+
+(def *print-commands* true)
 
 
 (declare update-ui-state!)
@@ -123,7 +125,7 @@
 
 (defn handle-command [game command]
   "Handles a given server command and returns the updated overall game"
-  ;(println (str "Command received: " command))
+  (if *print-commands* (println (str "Command received: " command)))
   (let [updates (get-updates game command)
 			  updated-game (reduce
 			       (fn [g u]
@@ -137,7 +139,7 @@
    (ic.renderer/add-animations-for-updates game updates)
    updated-game))
 
-(defn command-state-update [^PCommandState cs ^PGame game]
+(defn command-state-update [cs game]
   "Gets an updated command state if needed to allow for an updated game state"
   (try
     (update-command-state cs game)
@@ -311,7 +313,7 @@
 			      sm
 		        ability-target-map)
           sm))
-		  (ic.map/new-map)
+		  (new-map)
 	    targets)))
 
 (defn apcost-map [targets target-map]
@@ -327,7 +329,7 @@
               ssm)))
         sm
         ability-target-map))
-    (ic.map/new-map)
+    (new-map)
     targets))
 
 (defn get-ability-param [game unit ability tx ty]
@@ -579,7 +581,7 @@
 
 ; Component definitions
 
-(defn mini-map-colour [^PGame g x y]
+(defn mini-map-colour [g x y]
   (let [t (get-terrain g x y)
         u (get-unit g x y)]
     (cond 

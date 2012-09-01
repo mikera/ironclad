@@ -21,7 +21,7 @@
   (get-map [g])
   (get-unit-map [g])
   (add-player [g p])
-  (get-player [g ^long player-id])
+  (get-player [g player-id])
   (update-player [g p]))
 
 (defprotocol PDrawable

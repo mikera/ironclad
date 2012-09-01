@@ -274,28 +274,28 @@
       (:terrain g))
 
     (add-player [g p]
-	    (let [players ^mikera.persistent.IntMap (:players g)
-            pid (mikera.util.Rand/r 1000000)] 
+	    (let [players ^mikera.persistent.LongMap (:players g)
+            pid (long (mikera.util.Rand/r 1000000))] 
         (if (nil? (.get players pid))    
           (assoc g :players (.include players pid (merge p {:id pid})))
           (recur p))))
     (update-player 
       [g p]
       "Updates the data for a specific player"
-      (let [players ^mikera.persistent.IntMap (:players g)
-            pid (int (:id p))]
+      (let [players ^mikera.persistent.LongMap (:players g)
+            pid (long (:id p))]
         (assoc g :players (.include players pid p))))    
     (get-player [g player-id]
-      (let [players ^mikera.persistent.IntMap (:players g)]
+      (let [players ^mikera.persistent.LongMap (:players g)]
         (.get players player-id)))
 
     (get-unit-map [g]
       (:units g))
   PValidatable
 	  (validate [g]
-		  (let [^mikera.persistent.IntMap unit-locs (:unit-locations g)
+		  (let [^mikera.persistent.LongMap unit-locs (:unit-locations g)
 		        ^mikera.persistent.SparseMap units (:units g)
-		        players ^mikera.persistent.IntMap (:players g)]
+		        players ^mikera.persistent.LongMap (:players g)]
 			  (doseq [[uid ^ic.engine.Point loc] unit-locs]
 			    (let [u (get-unit g (.x loc) (.y loc))
 		            player-id (:player-id u)]
@@ -310,30 +310,36 @@
             (validate player))))
 		  true))
 
-(defn location-of-unit ^Point [^Game g u]
-  (.get ^mikera.persistent.IntMap (:unit-locations g) (:id u)))
+(defn location-of-unit ^ic.engine.Point [^Game game unit-or-id]
+  (if (instance? ic.engine.Unit unit-or-id)
+    (.get ^mikera.persistent.LongMap (:unit-locations game) (int (:id unit-or-id)))
+    (.get ^mikera.persistent.LongMap (:unit-locations game) (int unit-or-id))))
 
 (defn remove-unit [g ^long x ^long y]
   (let [^PUnit u (mget (:units g) x y)
-        ^Integer uid (:id u)]
+        uid (long (:id u))]
     (-> g
       (assoc :units (mset (:units g) x y nil))
       (assoc :unit-locations 
-        (let [^mikera.persistent.IntMap ul (:unit-locations g)] 
+        (let [^mikera.persistent.LongMap ul (:unit-locations g)] 
           (.delete ul uid))))))
     
-(defn get-unit [g ^long x ^long y]
-  (mget (:units g) x y))
+(defn get-unit 
+  ([g ^long id]
+    (if-let [^ic.engine.Point p (.get ^mikera.persistent.LongMap (:unit-locations g) (int id))]
+      (get-unit g (.x p) (.y p))))
+  ([g ^long x ^long y]
+    (mget (:units g) x y)))
 
 (defn add-unit [g ^long x ^long y u]
   (let [u ^Unit u
         current-id (:id u)
-        ^Integer uid (or current-id (new-unit-id g))
+        uid (long (or current-id (new-unit-id g)))
         u-with-id (if current-id u (assoc u :id uid))]
     (-> g
       (assoc :units (mset (:units g) x y u-with-id))
       (assoc :unit-locations 
-        (let [^mikera.persistent.IntMap ul (:unit-locations g)] 
+        (let [^mikera.persistent.LongMap ul (:unit-locations g)] 
           (.include ul uid (point x y)))))))
 
 (defn get-terrain [g ^long x ^long y]
@@ -345,8 +351,8 @@
 
 (defn new-unit-id [g]
   "Creates a new, unused unit ID for the given game"
-  (let [^mikera.persistent.IntMap ul (:unit-locations g)
-        id (mikera.util.Rand/nextInt)
+  (let [^mikera.persistent.LongMap ul (:unit-locations g)
+        id (mikera.util.Rand/nextLong)
         cu (.get ul id)]
     (if (nil? cu)
       id
@@ -360,8 +366,8 @@
      :units (new-units-map)
      :effects (new-map)
      :visibility (new-map)
-     :players (mikera.persistent.IntMap/EMPTY)
-     :unit-locations (mikera.persistent.IntMap/EMPTY)
+     :players (mikera.persistent.LongMap/EMPTY)
+     :unit-locations (mikera.persistent.LongMap/EMPTY)
      :turn-number 1}))
 
 ;; ==========================================================

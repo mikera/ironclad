@@ -12,7 +12,7 @@
   (:require [ic.serial])
   (:require [ic.units])
   (:import (javax.swing JScrollPane JCheckBox JOptionPane JFileChooser JTextPane ListModel SwingUtilities DefaultListModel JFrame JSeparator JComponent JList JTextField JTextArea JButton JPanel BoxLayout BorderFactory Timer)
-           (java.awt.event ActionListener MouseAdapter MouseMotionAdapter MouseEvent)
+           (java.awt.event ActionListener ActionEvent MouseAdapter MouseMotionAdapter MouseEvent)
            (java.awt.image BufferedImage)
            (java.net URL)
            (java.io File)

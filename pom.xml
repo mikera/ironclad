@@ -10,6 +10,13 @@
 			<url>http://clojars.org/repo</url>
 		</repository>
 	</repositories>
+	
+	<licenses>
+		<license>
+			<name>GNU General Public License (GPL)</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
+		</license>
+	</licenses>
 
 	<build>
 		<plugins>

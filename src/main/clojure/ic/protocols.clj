@@ -1,4 +1,5 @@
-(ns ic.protocols)
+(ns ic.protocols
+  "Protocols used in Ironclad")
 
 (defprotocol PAbility 
   (get-targets [ability game unit x y])

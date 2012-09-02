@@ -1,4 +1,5 @@
 (ns ic.renderer
+  "Code for drawing graphics and animations"
   (:use [ic protocols engine])
   (:use [mc.util])
   (:require [mc.resource])

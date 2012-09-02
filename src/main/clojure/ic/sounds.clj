@@ -1,7 +1,11 @@
 (ns ic.sounds
+  "Sound effects and sound utilities"
   (:require [mc.resource])
   (:import [mikera.sound Sample SoundEngine])
   (:use [ic.protocols]))
+
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
 
 (def sample-map (atom {}))
 

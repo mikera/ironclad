@@ -1,4 +1,5 @@
 (ns ic.engine
+  "The main Ironclad game engine"
   (:use [ic protocols])
   (:require [clojure.set]))
 

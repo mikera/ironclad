@@ -1,4 +1,5 @@
 (ns ic.game
+  "Game handling logic and AI routines"
   (:use [ic protocols map engine])
   (:require [ic.units])
   (:use [ic.command])

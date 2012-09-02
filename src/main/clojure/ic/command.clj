@@ -1,4 +1,9 @@
-(ns ic.command)
+(ns ic.command
+  "Functions for generating game commands")
+
+
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
 
 (defrecord Command [
    ^String command-type

@@ -1,4 +1,5 @@
 (ns ic.serial
+  "Game data serialization and deserialization routines"
   (:use [clojure.test])
   (:use [mc.util])
   (:use [ic protocols engine game units map gamefactory])

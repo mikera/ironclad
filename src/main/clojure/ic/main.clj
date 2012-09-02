@@ -1,8 +1,5 @@
-(try
-  (set! *warn-on-reflection* true)
-  (catch Throwable t nil))
-
 (ns ic.main
+  "The main executable script for Ironclad. Defines the top level UI and launches the game in a new Frame"
   (:use [ic.frame])
   (:use [mc.util])
   (:use [clojure.test])
@@ -17,6 +14,8 @@
            (mikera.ui JIcon)
            (mikera.web WebUtils)))
 
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
 
 (defn switch-to-screen [name]
   (.show card-layout (.getContentPane frame) name))

@@ -1,4 +1,5 @@
 (ns ic.interface 
+  "The main Ironclad user interface"
   (:use [ic.protocols])
   (:use [mc.util])
   (:require [mc.resource])

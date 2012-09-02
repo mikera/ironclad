@@ -1,4 +1,5 @@
 (ns ic.dialogs
+  "Dialog boxes"
   (:use [ic protocols engine map units game gamefactory])
   (:use [mc.util])
   (:require [mc.resource])
@@ -15,6 +16,9 @@
            (mikera.ui.steampunk PanelBorder)
            (ic ListCellData)
            (net.miginfocom.swing MigLayout)))
+
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
 
 (declare save-tab-paint-settings)
 

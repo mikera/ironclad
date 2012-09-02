@@ -6,6 +6,9 @@
              (mikera.ui Tools)
              (ic IronClad)))
 
+(set! *warn-on-reflection* true)
+(set! *unchecked-math* true)
+
 (do 
   (javax.swing.UIManager/setLookAndFeel (SynthLookAndFeel.))
   (javax.swing.plaf.synth.SynthLookAndFeel/setStyleFactory

@@ -1,4 +1,5 @@
 (ns ic.units
+  "This file contains unit definitions and code for unit abilities"
   (:use [clojure.test])
   (:use [mc.util])
   (:use [ic protocols engine map graphics])

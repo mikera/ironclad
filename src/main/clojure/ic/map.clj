@@ -1,4 +1,5 @@
 (ns ic.map  
+  "This file contains map data and terrain definitions"
   (:use [mc.util])
   (:use [ic protocols engine])
   (:require [ic.graphics])
@@ -7,6 +8,7 @@
   (:import [mikera.math.Bounds4i])
   (:import [mikera.persistent.SparseMap])
   (:import [java.awt Color]))
+
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* true)

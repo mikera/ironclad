@@ -25,7 +25,7 @@
            (ic ListCellData)
            (net.miginfocom.swing MigLayout)))
 
-(def *print-commands* true)
+(def *print-commands* false)
 
 
 (declare update-ui-state!)

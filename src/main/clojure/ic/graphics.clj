@@ -5,12 +5,15 @@
   (:import  [mikera.ui.steampunk Images]))
 
 (def ^java.awt.image.BufferedImage unit-image
+  "Image containing unit graphics"
   (mc.resource/load-image "pov/units.png"))
 
 (def ^java.awt.image.BufferedImage title-image
+  "Image containing title image"
   (mc.resource/load-image "pov/title.png"))
  
 (def ^java.awt.image.BufferedImage terrain-image
+  "Image containing map terrain"
   (mc.resource/load-image "pov/terrain.png"))
 
 (def ^java.awt.Font main-font 

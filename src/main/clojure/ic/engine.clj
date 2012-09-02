@@ -9,8 +9,8 @@
 ;; ===============================================
 ;; constants
 
-(def ^:const TERRAIN_SIZE (int 128))
-(def ^:const HALF_TERRAIN_SIZE (int (/ TERRAIN_SIZE 2)))
+(def ^:const TERRAIN_SIZE 128)
+(def ^:const HALF_TERRAIN_SIZE (long (/ TERRAIN_SIZE 2)))
 
 ;; ================================================
 ;; forward declarations
@@ -313,8 +313,8 @@
 
 (defn location-of-unit ^ic.engine.Point [^Game game unit-or-id]
   (if (instance? ic.engine.Unit unit-or-id)
-    (.get ^mikera.persistent.LongMap (:unit-locations game) (int (:id unit-or-id)))
-    (.get ^mikera.persistent.LongMap (:unit-locations game) (int unit-or-id))))
+    (.get ^mikera.persistent.LongMap (:unit-locations game) (long (:id unit-or-id)))
+    (.get ^mikera.persistent.LongMap (:unit-locations game) (long unit-or-id))))
 
 (defn remove-unit [g ^long x ^long y]
   (let [^PUnit u (mget (:units g) x y)
@@ -327,7 +327,7 @@
     
 (defn get-unit 
   ([g ^long id]
-    (if-let [^ic.engine.Point p (.get ^mikera.persistent.LongMap (:unit-locations g) (int id))]
+    (if-let [^ic.engine.Point p (.get ^mikera.persistent.LongMap (:unit-locations g) (long id))]
       (get-unit g (.x p) (.y p))))
   ([g ^long x ^long y]
     (mget (:units g) x y)))

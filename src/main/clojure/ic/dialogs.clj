@@ -309,7 +309,7 @@
             (let [^ListCellData lcd (.getSelectedValue ^JList jlist)
                   side (.value lcd)]
               (reset! paint-side side)
-              (.setModel @unit-jlist (paint-units-list-model side))
+              (.setModel ^JList @unit-jlist (paint-units-list-model side))
               (set-paint-mode!))))))
      jlist))
 

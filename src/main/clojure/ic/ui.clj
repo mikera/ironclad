@@ -37,7 +37,7 @@
     (.setBorder (mikera.ui.steampunk.PanelBorder/FILLED_BORDER))
     (.add comp "Center" )))
 
-(defn make-button-panel [buttons]
+(defn ^JPanel make-button-panel [buttons]
   (let [outer-panel (JPanel.)
         panel (JPanel.)] 
     (doto outer-panel
@@ -48,7 +48,7 @@
       (.add panel button))
     outer-panel))
 
-(defn make-title-button 
+(defn ^JButton make-title-button 
   ([string] 
     (doto (JButton. string)
       (.setFont (SteamPunkStyle/LARGE_FONT))

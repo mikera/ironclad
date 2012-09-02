@@ -33,7 +33,7 @@
   (let [exit-button (ic.ui/make-title-button "Return to main menu" #(switch-to-screen "Title"))]
     (ic.ui/make-button-panel [exit-button])))
 
-(defn ^JPanel make-sub-screen [panel]
+(defn ^JPanel make-sub-screen [^JPanel panel]
   "Makes a sub screen with the standard format / return to main title at the bottom"
   (let [screen (JPanel.)]
 	  (doto screen
@@ -152,7 +152,7 @@ Hints:
             button-panel (JPanel.)
             [name description mission-text] (nth tutorial-list i)
             button (ic.ui/make-title-button name #(play-tutorial i))
-            label (JTextArea. description)]
+            label (JTextArea. (str description))]
 ;        (.setForeground label (SteamPunkStyle/GOLD_COLOUR))
 				(doto label
 			    (.setEditable false)

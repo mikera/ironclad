@@ -1,6 +1,6 @@
 (ns ic.test.test-units
   (:use clojure.test)
-  (:use [ic protocols map units])
+  (:use [ic protocols map engine units])
   (:import [ic.units.Unit]))
 
 

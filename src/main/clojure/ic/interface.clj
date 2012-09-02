@@ -26,7 +26,7 @@
            (ic ListCellData)
            (net.miginfocom.swing MigLayout)))
 
-(def *print-commands* false)
+(def DEBUG-PRINT-COMMANDS false)
 
 
 (declare update-ui-state!)
@@ -126,7 +126,7 @@
 
 (defn handle-command [game command]
   "Handles a given server command and returns the updated overall game"
-  (if *print-commands* (println (str "Command received: " command)))
+  (if DEBUG-PRINT-COMMANDS (println (str "Command received: " command)))
   (let [updates (get-updates game command)
 			  updated-game (reduce
 			       (fn [g u]

@@ -16,8 +16,7 @@
 (declare unit)
 (declare unit-type-map)
 
-
-
+;; multiplier for all attack powers in the game
 (def ^:const ATTACK_POWER_FACTOR 2.0)
 
 (def ^:const AI_AGGRESSION_FACTOR 1.5) ; ratio of favouring attack / ignoring defence
@@ -28,6 +27,10 @@
 
 
 (def ^:const DEFAULT_RETURN_FIRE false)
+
+;; cost to move across a zone of control
+(def ^:const ZONE-OF-CONTROL-COST 1)
+
 
 (def UNIT_TYPES [
 	(def UNITTYPE_INFANTRY "Infantry")
@@ -96,15 +99,18 @@
 
 
 (defn allied-unit? [u1 u2]
+  "Returns true if two unites are allied (same player or on allied players)"
   (= (:side u1) (:side u2)))
 
 (defn used-capacity [tu]
+  "Returns the amount of storage capacity used in a specific unit"
   (reduce 
     (fn [val u] (+ val (:size u))) 
     0 
     (:contents tu)))
 
 (defn available-capacity [tu]
+  "Return the available capacity within a specific unit"
   (- (:capacity tu) (used-capacity tu)))
 
 
@@ -114,7 +120,7 @@
 
 
 (defn can-enter? [unit tu]
-  "Returns true if unit can enter another unit"
+  "Returns true if unit can enter another unit (either to board or capture it)"
   (and 
     (:allow-enter tu)
     (<= (:size unit) (:max-contents-size tu))
@@ -143,13 +149,14 @@
       (can-enter? unit tu)))) 
  
 (defn base-move-cost ^long [unit terrain]  
-  "Gets base move cost as percentage, 100 = 1 AP"
+  "Gets base move cost as long percentage, 100 = 1 AP"
   (let [terrain-type (:terrain-type terrain)
         unit-move-type (:move-type unit)
         base-cost (long ((TERRAIN_MOVE_COST terrain-type) unit-move-type))]
     base-cost))
 
 (defn ^Integer zoc-cost 
+  "Returns the Zone-Of-Control cost of moving to a specific hex"
   ([game unit ^Integer sx ^Integer sy ^Integer tx ^Integer ty]  
     (let [move-dir (mikera.engine.Hex/direction sx sy tx ty)]
       (unchecked-add 
@@ -164,33 +171,44 @@
           (allied-unit? unit enemy)
           (:ignore-zoc unit))
       0
-      1)))
+      ZONE-OF-CONTROL-COST)))
 
 (defn move-cost [game unit ^Integer sx ^Integer sy ^Integer tx ^Integer ty]
+  "Returns the movement cost of a unit moving from adjacent hexes (sx,sy) to (tx,ty). Zero means an impossible move."
   (let [terrain (get-terrain game tx ty)
         tu (get-unit game tx ty)
         unit-move-type (:move-type unit)]
     (double (cond 
+      ;; can't move off the map
       (nil? terrain)
         0
+      ;; flying units always have a move cost of 1
       (= unit-move-type MOVETYPE_FLY)
         1
       (and (not (nil? tu)) (not (allied-unit? unit tu))) 
         ; can only move through allied units. Capture case handled in move-improvement-list
         0
-      ; check rail first
+      ;; check rail movement possibility
       (and (:has-rail terrain) (:has-rail (get-terrain game sx sy)) (> ((TERRAIN_MOVE_COST "Rail") unit-move-type) 0))
         (/ (int ((TERRAIN_MOVE_COST "Rail") unit-move-type)) 100.0)
+      ;; check road movement possibility
       (and (:has-road terrain) (:has-road (get-terrain game sx sy)))
         (/ (int ((TERRAIN_MOVE_COST "Road") unit-move-type)) 100.0)
       :default
         (let [base-cost (base-move-cost unit terrain) 
               multiplier (int (:move-cost-multiplier terrain))]
-	        (if (<= base-cost 0)
-	          0
-		        (+
-		          (/ (* base-cost multiplier) 10000)
-		          (zoc-cost game unit sx sy tx ty))))))))
+	        (cond
+            ;; can't move from current Hex
+            (<= (base-move-cost unit (get-terrain game sx sy)) 0)
+              0
+            ;; can't move to target hex
+            (<= base-cost 0)
+	            0
+            ;; normal move is possible
+            :else 
+			        (+
+			          (/ (* base-cost multiplier) 10000)
+			          (zoc-cost game unit sx sy tx ty))))))))
 
 (defn suitable-terrain [unit terrain]
   (or 

@@ -8,6 +8,18 @@
 (set! *unchecked-math* true)
 
 
+(defn make-map2 [] 
+  (let [m (ic.engine/new-map)]
+    (->
+      m
+      (mset 0 0 (terrain "Grassland"))
+      (mset 1 0 (terrain "Grassland"))
+      (mset 0 1 (terrain "Sea")))))
+
+
+
+
+
 (deftest points
   (testing "Basic Point"
            

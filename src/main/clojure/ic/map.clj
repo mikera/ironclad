@@ -187,13 +187,3 @@
       "Rocky Grassland" "Wooded Grassland" "Woods" "Woods"
       "Sea" "Sea" "Sea" "Sea" "Sea" "Sea" "Sea"
       "Sea Rocks" "Deep Sea" "Deep Sea"])))
-
-(defn make-map2 [] 
-  (let [m (ic.engine/new-map)]
-    (->
-      m
-      (mset 0 0 (terrain "Grassland"))
-      (mset 1 0 (terrain "Grassland"))
-      (mset 0 1 (terrain "Sea")))))
-
-

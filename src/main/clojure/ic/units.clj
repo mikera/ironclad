@@ -113,11 +113,8 @@
   "Return the available capacity within a specific unit"
   (- (:capacity tu) (used-capacity tu)))
 
-
-; unit entering logic
-
-
-
+;; ===============================
+;; Unit entering logic
 
 (defn can-enter? [unit tu]
   "Returns true if unit can enter another unit (either to board or capture it)"
@@ -138,7 +135,8 @@
                                (merge unit {:aps 0}))})))
 
 
-; movement logic
+;; ====================================
+;; movement logic
 
 (defn allowable-move-endpoint? [game unit tx ty]
   "Returns true if the destination is an allowable move end point - either empty or a unit that can be entered"
@@ -150,21 +148,23 @@
  
 (defn base-move-cost ^long [unit terrain]  
   "Gets base move cost as long percentage, 100 = 1 AP"
-  (let [terrain-type (:terrain-type terrain)
-        unit-move-type (:move-type unit)
-        base-cost (long ((TERRAIN_MOVE_COST terrain-type) unit-move-type))]
-    base-cost))
+  (if terrain
+    (let [terrain-type (:terrain-type terrain)
+          unit-move-type (:move-type unit)
+          base-cost ((TERRAIN_MOVE_COST terrain-type) unit-move-type)]
+      base-cost)
+    0))
 
-(defn ^Integer zoc-cost 
+(defn zoc-cost 
   "Returns the Zone-Of-Control cost of moving to a specific hex"
   ([game unit ^Integer sx ^Integer sy ^Integer tx ^Integer ty]  
     (let [move-dir (mikera.engine.Hex/direction sx sy tx ty)]
-      (unchecked-add 
+      (+ 
         ^Integer (zoc-cost game unit 
           (get-unit game (unchecked-add sx (mikera.engine.Hex/dx (inc move-dir))) (unchecked-add sy (mikera.engine.Hex/dy (inc  move-dir)))))
         ^Integer (zoc-cost game unit 
           (get-unit game (unchecked-add sx (mikera.engine.Hex/dx (dec move-dir))) (unchecked-add sy (mikera.engine.Hex/dy (dec  move-dir))))))))
-  ([game unit enemy] 
+  (^long [game unit enemy] 
     (if (or 
           (nil? enemy) 
           (<= (:zoc-size enemy) 0) 
@@ -185,8 +185,8 @@
       ;; flying units always have a move cost of 1
       (= unit-move-type MOVETYPE_FLY)
         1
+      ;; can only move through allied units. Capture case handled in move-improvement-list
       (and (not (nil? tu)) (not (allied-unit? unit tu))) 
-        ; can only move through allied units. Capture case handled in move-improvement-list
         0
       ;; check rail movement possibility
       (and (:has-rail terrain) (:has-rail (get-terrain game sx sy)) (> ((TERRAIN_MOVE_COST "Rail") unit-move-type) 0))
@@ -194,11 +194,12 @@
       ;; check road movement possibility
       (and (:has-road terrain) (:has-road (get-terrain game sx sy)))
         (/ (int ((TERRAIN_MOVE_COST "Road") unit-move-type)) 100.0)
+      ;; normal move calculation
       :default
         (let [base-cost (base-move-cost unit terrain) 
               multiplier (int (:move-cost-multiplier terrain))]
 	        (cond
-            ;; can't move from current Hex
+            ;; can't move from current Hex terrain
             (<= (base-move-cost unit (get-terrain game sx sy)) 0)
               0
             ;; can't move to target hex
@@ -209,6 +210,13 @@
 			        (+
 			          (/ (* base-cost multiplier) 10000)
 			          (zoc-cost game unit sx sy tx ty))))))))
+
+(defn can-move?
+  [game unit sx sy tx ty]
+  (or (> (move-cost game unit sx sy tx ty) 0)
+       (if-let [tu (get-unit game tx ty)]
+         (can-enter? unit tu)
+         false)))
 
 (defn suitable-terrain [unit terrain]
   (or 
@@ -279,6 +287,7 @@
         (recur game unit apsmax (move-improvements game unit apsmax newmoves moves) moves)))))
 
 ; gets map of all allowable move destination points to ap cost
+; eliminates all interim moves not allowed e.g. moving over friendly units
 (defn allowable-moves [game unit x y]
   (reduce
     (fn [am [pos ap]] 
@@ -289,7 +298,7 @@
     (possible-moves game unit x y)))
 
 
-(defn trace-moves [possible-moves sx sy tx ty]
+(defn trace-moves [possible-moves game unit sx sy tx ty]
   (let [p (point tx ty)
         paps (possible-moves p)] 
     (cond 
@@ -299,16 +308,22 @@
         (list p)
       :default  
         (let [adjs (adjacent-point-list p)
-	            pp ^ic.engine.Point (argmax #(- (or (possible-moves %) 1000000)) adjs  )]
+	            prev-p ^ic.engine.Point 
+                     (argmax (fn [^ic.engine.Point fp] 
+                               (- (or 
+                                    (and
+                                      (can-move? game unit (.x fp) (.y fp) tx ty)
+                                      (possible-moves fp)) 
+                                   1000000))) adjs  )]
 	        (cons
 	          p
-	          (trace-moves possible-moves sx sy (.x pp) (.y pp)))))))
+	          (trace-moves possible-moves game unit sx sy (.x prev-p) (.y prev-p)))))))
 
 
 
 
-
-; deploy logic
+;; ====================================
+;; deployment logic
 
 (defn can-deploy? [ability game unit tx ty]
   (let [t (get-terrain game tx ty)
@@ -333,8 +348,8 @@
 	    {}
 	    (adjacent-point-list x y))))
 
-
-; building logic
+;; ===========================
+;; building logic
 (defn suitable-build-terrain [build-unit terrain]
   (cond 
     (= MOVETYPE_FLY (:move-type build-unit))
@@ -586,7 +601,7 @@
           
           ; enter unit / capture building
           (and tu (can-enter? unit tu))
-            (let [moves (reverse (trace-moves possible-moves sx sy tx ty))]
+            (let [moves (reverse (trace-moves possible-moves game unit sx sy tx ty))]
 	            (cons 
 	              (merge 
 	                (msg-remove-unit unit sx sy)
@@ -595,7 +610,7 @@
           
           ; standard move  
           :default
-	          (let [moves (reverse (trace-moves possible-moves sx sy tx ty))
+	          (let [moves (reverse (trace-moves possible-moves game unit sx sy tx ty))
                   [^ic.engine.Point lm1 ^ic.engine.Point lm2] (drop (- (count moves) 2) moves)]
 		          (list-not-nil
 		            (msg-update-unit unit :dir (mikera.engine.Hex/direction (- (.x lm2) (.x lm1)) (- (.y lm2) (.y lm1))))

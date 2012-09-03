@@ -42,3 +42,22 @@
   (for [att ATTACK_TYPES ut UNIT_TYPES]
     (is (not (nil? ((TARGET_EFFECT att) ut))))))
 
+
+(defn unit-test-game []
+  (-> (new-game) 
+             (add-player (player {:name "Test player" :side 0 :is-human true}))
+             (add-player (player {:name "Test AI" :side 1 :is-human false}))
+             (set-terrain 0 0 (terrain "Grassland"))
+             (set-terrain 1 0 (terrain "Grassland"))
+             (set-terrain 0 1 (terrain "Sea"))
+             (set-terrain 1 1 (terrain "Woods"))))
+
+(deftest test-moves
+  (let [g (unit-test-game)
+        u (unit "Rifles")
+        g (-> g
+            (add-unit 0 0 u ))]
+    (is (can-move? g u 0 0 1 0))
+    (is (not (can-move? g u 0 0 -1 0))) ;; off map
+    (is (not (can-move? g u -1 0 0 0))) ;; onto map
+    (is (not (can-move? g u 0 0 0 1)))))

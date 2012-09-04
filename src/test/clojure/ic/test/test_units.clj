@@ -72,4 +72,5 @@
         u (get-unit g 0 0)      ;; get unit back, should now have a valid ID
         cm (command u "Move: Foot" 1 0 nil)
         g2 (apply-command g cm)]
-    (is (= (point 1 0) (location-of-unit g2 u)))))
+    (is (= (point 1 0) (location-of-unit g2 u))
+        (< (:aps u) (:aps (get-unit g2 1 0))))))

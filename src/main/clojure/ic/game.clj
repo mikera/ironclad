@@ -45,8 +45,11 @@
       (= (:side player) side))
     (.values ^mikera.persistent.LongMap (:players g))))
 
-(defn side-has-human? [g side]
-  (some (fn [[i p]] (and (= side (:side p)) (:is-human p))) (:players g)))
+(defn side-has-human? 
+  "Returns true if at least one player on a side is human"
+  ([g side]
+    (boolean 
+      (some (fn [[i p]] (and (= side (:side p)) (:is-human p))) (:players g)))))
 
 ;; =========================================================================
 ;; Update functions
@@ -226,24 +229,24 @@
                      v)))))
     @m))
 
-(defn threat-radius [unit]
-  (:threat-radius unit))
+(defn threat-radius ^double [unit]
+  (double (:threat-radius unit)))
 
-(defn threat-level [unit]
-  (:threat-level unit))
+(defn threat-level ^double [unit]
+  (double (:threat-level unit)))
 
-(defn ^Double objective-value [unit]
-  (:value unit))
+(defn objective-value ^double [unit]
+  (double (:value unit)))
 
 
-(defn ^Double calc-threat-level [unit sx sy tx ty]
+(defn calc-threat-level [unit sx sy tx ty]
   (let [dist (mikera.engine.Hex/distance sx sy tx ty)
         radius (threat-radius unit)]
     (if (<= dist radius)
       (* (threat-level unit) (- 1 (/ dist radius 2)))
-      0)))
+      0.0)))
 
-(defn ^Double calc-objective-value [unit sx sy tx ty]
+(defn calc-objective-value [unit sx sy tx ty]
   (let [dist (mikera.engine.Hex/distance sx sy tx ty)
         factor (+ 1.0 (* 0.2 dist))]
     (/ (objective-value unit) (* factor factor factor))))
@@ -289,35 +292,41 @@
 
 
 
-(defn ai-action [game unit x y]
-  (let [command (ic.units/ai-best-command game unit x y)]
-    ;(println (str "Command: " command))
-    (if (nil? command)
-      '()
-      (list (assoc command :player-id (:player-id unit))))))
+(defn get-ai-action
+  "Gets the best AI command for a given unit, or nil if none"
+  ([game unit x y]
+    (let [command (ic.units/ai-best-command game unit x y)]
+      ;(println (str "Command: " command))
+      (if (nil? command)
+        nil
+        (list (assoc command :player-id (:player-id unit)))))))
 
-(defn is-controlled? [unit player]
-  (= (:id player) (:player-id unit)))
+(defn is-controlled? 
+  "Returns true if the unit is controlled by a specific player"
+  ([unit player]
+    (= (:id player) (:player-id unit))))
 
-(defn is-ai-controlled-unit? [game unit]
-  (let [player (get-player game (:player-id unit))] 
-    (:ai-controlled player)))
+(defn is-ai-controlled-unit? 
+  "Returns true if specific unit is controlled by an AI"
+  ([game unit]
+    (let [player (get-player game (:player-id unit))] 
+      (boolean (:ai-controlled player)))))
 
 ; time update handling
 
 (defn get-ai-command [g player u x y]
-  "Creates ai action command list for a single unit"
+  "Creates ai action command list (or nil) for a single unit"
   (if 
     (or (> (:aps u) 0) (not (empty? (:contents u))))
-    (ai-action g u x y)
-    '()))
+    (get-ai-action g u x y)
+    nil))
 
 (defn get-ai-commands 
+  "Gets a list of all ai-commands for the given game"
   ([g ]
     (get-ai-commands g (fn [u] true)))
 
   ([g unit-pred]
-    "Gets a list of all ai-commands for the given game"
     (let [^mikera.persistent.LongMap unit-locs (:unit-locations g)
           ^mikera.persistent.SparseMap units (:units g)]
       ;(println event)
@@ -337,7 +346,7 @@
 ; next turn handling
 
 (defn handle-unit-turn [g u x y millis base]
-  "Handles the end of turn event for a unit"
+  "Handles the end of turn event for a unit, returning a list of updates"
   (let [apsmax (:apsmax u)
         ap-recharge-period (if (> apsmax 0) (/ (* 100 TURN_LENGTH_MILLIS) apsmax (:recharge u)) 1000000)
         ap-bonus (mikera.util.Maths/quantize millis ap-recharge-period base)
@@ -357,7 +366,7 @@
 
 
 (defn handle-turn-event [g event]
-  "Handles the End of Turn event"
+  "Handles the End of Turn event, returning list of updates"
   (let [{ cmd :command-type } event
         ^mikera.persistent.LongMap unit-locs (:unit-locations g)
         resource-tally (atom {})]

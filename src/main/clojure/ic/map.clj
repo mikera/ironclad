@@ -9,7 +9,6 @@
   (:import [mikera.persistent.SparseMap])
   (:import [java.awt Color]))
 
-
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* true)
 
@@ -28,8 +27,8 @@
 
 ; Terrain functions
 
-
-(def default-terrain-data 
+;; Default terrain data used for creating terrain objects
+(def ^:private default-terrain-data 
   {:image ic.graphics/terrain-image
    :ix 0
    :move-cost-multiplier 100
@@ -39,10 +38,12 @@
    :elevation 1
    :source-image ic.graphics/terrain-image})
 
-; list of terrain types, built by make-terrain
-(def temp-terrain-types (atom nil))
 
-(defn make-terrain 
+;; temporary list of terrain types, built up by make-terrain
+(def ^:private temp-terrain-types (atom nil))
+
+(defn ^:private make-terrain 
+  "Makes a new terrain object, optionally descending from an existing named terrain type"
   ([props]
     (swap! temp-terrain-types conj
       (ic.engine.Terrain.
@@ -165,15 +166,18 @@
   @temp-terrain-types)
 
 (def terrain-type-map 
-   (reduce 
-     (fn [m t] (assoc m (:name t) t)) 
-     {} 
-     terrain-types))
+  "Map of terrain type names to terrain objects"
+  (reduce 
+    (fn [m t] (assoc m (:name t) t)) 
+    {} 
+    terrain-types))
 
-(defn terrain ^ic.engine.Terrain [tname] 
-  (or 
-    (terrain-type-map tname) 
-    (throw (Error. (str  "Terrain type [" tname "] not found")))))
+(defn terrain 
+  "Creates a terrain object for a given terrain name "
+  (^ic.engine.Terrain [tname] 
+	  (or 
+	    (terrain-type-map tname) 
+	    (mc.util/error (str  "Terrain type [" tname "] not found")))))
 
 
 ; Map builders

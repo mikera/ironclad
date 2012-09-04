@@ -29,7 +29,7 @@
               (fn [x y] 
                 (and 
                   (nil? (get-unit g x y))
-                  (suitable-terrain u (get-terrain g x y)))))
+                  (suitable-terrain? u (get-terrain g x y)))))
         new-unit (merge u 
                    {:side side
                     :player-id (:id (get-player-for-side g side))})]

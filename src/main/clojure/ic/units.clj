@@ -95,11 +95,11 @@
 (def TERRAIN_MOVE_COST (load-table "tables/terrain_move_cost.csv"))
  
 
-; commun unit functions
+; common unit functions
 
 
 (defn allied-unit? [u1 u2]
-  "Returns true if two unites are allied (same player or on allied players)"
+  "Returns true if two units are allied (same player or on allied players)"
   (= (:side u1) (:side u2)))
 
 (defn used-capacity [tu]
@@ -119,11 +119,12 @@
 (defn can-enter? [unit tu]
   "Returns true if unit can enter another unit (either to board or capture it)"
   (and 
-    (:allow-enter tu)
-    (<= (:size unit) (:max-contents-size tu))
+    (:allow-enter tu) ;; must be possible to enter target unit
+    (<= (:size unit) (:max-contents-size tu)) ;; must fit within maximum
     (if (allied-unit? unit tu) 
-      (<= (:size unit) (available-capacity tu))
-      (and (:can-capture unit) (:allow-capture tu)))))
+      (<= (:size unit) (available-capacity tu))  ;; fit inside case
+      (and (:can-capture unit) (:allow-capture tu))  ;; capture case
+      )))
 
 (defn enter-unit [game unit tx ty tu]
   "Returns updates for a unit entering another unit. Excludes movement/removal of unit."
@@ -160,9 +161,9 @@
   ([game unit ^Integer sx ^Integer sy ^Integer tx ^Integer ty]  
     (let [move-dir (mikera.engine.Hex/direction sx sy tx ty)]
       (+ 
-        ^Integer (zoc-cost game unit 
+        (zoc-cost game unit 
           (get-unit game (unchecked-add sx (mikera.engine.Hex/dx (inc move-dir))) (unchecked-add sy (mikera.engine.Hex/dy (inc  move-dir)))))
-        ^Integer (zoc-cost game unit 
+        (zoc-cost game unit 
           (get-unit game (unchecked-add sx (mikera.engine.Hex/dx (dec move-dir))) (unchecked-add sy (mikera.engine.Hex/dy (dec  move-dir))))))))
   (^long [game unit enemy] 
     (if (or 
@@ -212,13 +213,14 @@
 			          (zoc-cost game unit sx sy tx ty))))))))
 
 (defn can-move?
+  "Returns true if a unit can physically move from (sx,sy) to an adjacent hex (tx,ty)"
   [game unit sx sy tx ty]
   (or (> (move-cost game unit sx sy tx ty) 0)
        (if-let [tu (get-unit game tx ty)]
          (can-enter? unit tu)
          false)))
 
-(defn suitable-terrain [unit terrain]
+(defn suitable-terrain? [unit terrain]
   (or 
     (> (base-move-cost unit terrain) 0)
     (and (:has-rail terrain) (= (:move-type unit) MOVETYPE_RAIL))))
@@ -334,32 +336,35 @@
       (nil? tu)
       (some 
         (fn [du] 
-          (and (> (:aps du 0)) (suitable-terrain du t))) 
+          (and (> (:aps du 0)) (suitable-terrain? du t))) 
         contents))))
 
-(defn deploy-targets [ability game unit x y]
-  (let []
-	  (reduce 
-	    (fn [bm ^ic.engine.Point pos] 
-	      (if 
-          (can-deploy? ability game unit (.x pos) (.y pos))
-	        (assoc bm pos (:cost ability))
-	        bm))
-	    {}
-	    (adjacent-point-list x y))))
+(defn deploy-targets 
+  "Returns a map of possible deploy target locations -> ap cost"
+  ([ability game unit sx sy]
+	  (let []
+		  (reduce 
+		    (fn [bm ^ic.engine.Point pos] 
+		      (if 
+	          (can-deploy? ability game unit (.x pos) (.y pos))
+		        (assoc bm pos (:cost ability))
+		        bm))
+		    {}
+		    (adjacent-point-list sx sy)))))
 
 ;; ===========================
-;; building logic
-(defn suitable-build-terrain [build-unit terrain]
+;; Building logic
+
+(defn suitable-build-terrain? [build-unit terrain]
   (cond 
     (= MOVETYPE_FLY (:move-type build-unit))
       (= ic.map/TERRAINTYPE_OPEN (:terrain-type terrain)) ;can only build air units on open ground
     (= MOVETYPE_IMMOBILE (:move-type build-unit))
       (if (or (:has-road terrain) (:has-rail terrain))
         false
-        (suitable-terrain build-unit terrain))
+        (suitable-terrain? build-unit terrain))
     :default
-      (suitable-terrain build-unit terrain)))
+      (suitable-terrain? build-unit terrain)))
 
 (defn buildable-unit-names [ability game unit tx ty]
   (let [t (get-terrain game tx ty)]
@@ -374,7 +379,7 @@
 	              (>= 
 	                (:resources (get-player game (:player-id unit))) 
 	                (:value build-unit))
-	              (suitable-build-terrain build-unit t)))) 
+	              (suitable-build-terrain? build-unit t)))) 
 	        (:build-list ability))))
        nil))) ; default to nil return value if no units possible
 
@@ -390,8 +395,8 @@
     {}
     (adjacent-point-list x y)))
 
-
-; attack logic
+;; =====================================
+;; Attack logic
 
 (defn attack-cost-aps [ability unit]
   (max 
@@ -645,7 +650,7 @@
     (ai-action-param [ability game unit sx sy tx ty]
       (let [terrain (get-terrain game tx ty)
             contents (:contents unit)
-            deployables (filter (fn [du] (and (> (:aps du) 0) (suitable-terrain du terrain))) contents)]
+            deployables (filter (fn [du] (and (> (:aps du) 0) (suitable-terrain? du terrain))) contents)]
         (if (not (empty? deployables))
           (let [du (rand-choice deployables)
                 i (find-position contents du)]
@@ -671,7 +676,7 @@
             (list (msg-command-fail (str "Deploy target area blocked")))
           (> 1 (mikera.engine.Hex/distance sx sy tx ty)) 
             (list (msg-command-fail (str "Cannot deploy in non-adjacent hex")))
-          (not (suitable-terrain deploy-unit deploy-terrain))
+          (not (suitable-terrain? deploy-unit deploy-terrain))
             (list (msg-command-fail (str "Cannot deploy " (:name deploy-unit) " on this terrain: " (:name deploy-terrain))))
           :default
             (let [new-unit (merge deploy-unit
@@ -706,7 +711,7 @@
     (needs-param? [ability] (not (:auto-choose-build ability)))
     (ai-action-param [ability game unit sx sy tx ty]
       (let [terrain (get-terrain game tx ty)
-            build-list (filter #(suitable-build-terrain (unit-type-map %) terrain) (:build-list ability))]
+            build-list (filter #(suitable-build-terrain? (unit-type-map %) terrain) (:build-list ability))]
         (if (not (empty? build-list))
           (mc.util/rand-choice build-list)
           nil)))
@@ -736,7 +741,7 @@
             (list (msg-command-fail (str "Cannot build in non-adjacent hex")))
           (not (list-contains? build-list build-name))
             (list (msg-command-fail (str "Unable to build unit of type: " build-name)))
-          (not (suitable-build-terrain new-unit build-terrain))
+          (not (suitable-build-terrain? new-unit build-terrain))
             (list (msg-command-fail (str "Cannot build " build-name " on this terrain: " (:name build-terrain))))
           :default
 		        (list 

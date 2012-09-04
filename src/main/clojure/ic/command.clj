@@ -6,6 +6,12 @@
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* true)
 
+;; ===================================================
+;; Command data structure
+;;
+;; Represents a high level command sent to the game
+;; Likely to result in multiple updates to game state
+
 (defrecord Command [
    ^String command-type   ;; type of command, e.g. "Command" of "God-Command"
    ^long uid              ;; unit id
@@ -28,9 +34,11 @@
                 unit-or-id)]
      (Command. "Command" uid ability-name tx ty param))))
 
-(defn god-command [update]
-  {:command-type "God-Command" 
-   :update update})
+(defn god-command 
+  "Creates a god command that forces a specific game update"
+  ([update]
+    {:command-type "God-Command" 
+     :update update}))
 
 (defn time-event [millis base]
   {:command-type "Tick tock" 
@@ -52,6 +60,11 @@
 (def MSG_MOVE_UNIT "Move unit")
 (def MSG_FAILED_COMMAND "Failed command")
 (def MSG_NEXT_TURN "Next turn")
+
+;; ==========================================
+;; Update generator functions
+;;
+;; all updates to game state should pass though these functions
 
 (defn msg-update-unit 
   ([u1 prop value]

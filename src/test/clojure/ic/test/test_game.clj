@@ -1,6 +1,7 @@
 (ns ic.test.test-game
   (:use clojure.test)
-  (:use [ic protocols engine game map units]))
+  (:use [ic protocols engine game map units])
+  (:require [mc.util :as mcu]))
 
 
 (deftest t2

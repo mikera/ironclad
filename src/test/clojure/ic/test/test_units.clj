@@ -1,6 +1,7 @@
 (ns ic.test.test-units
   (:use clojure.test)
-  (:use [ic protocols map engine units])
+  (:use [ic protocols map engine command game units])
+  (:require [mc.util :as mcu])
   (:import [ic.units.Unit]))
 
 
@@ -59,5 +60,16 @@
             (add-unit 0 0 u ))]
     (is (can-move? g u 0 0 1 0))
     (is (not (can-move? g u 0 0 -1 0))) ;; off map
-    (is (not (can-move? g u -1 0 0 0))) ;; onto map
+    (is (not (can-move? g u -1 0 0 0))) ;; onto map 
+    (is (can-move? g u 1 0 0 0)) ;; onto occupied hex 
     (is (not (can-move? g u 0 0 0 1)))))
+
+(deftest test-unit-move-command
+  (let [g (unit-test-game)
+        u (unit "Rifles")
+        g (-> g
+            (add-unit 0 0 u ))
+        u (get-unit g 0 0)      ;; get unit back, should now have a valid ID
+        cm (command u "Move: Foot" 1 0 nil)
+        g2 (apply-command g cm)]
+    (is (= (point 1 0) (location-of-unit g2 u)))))

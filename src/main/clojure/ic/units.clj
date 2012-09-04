@@ -274,8 +274,8 @@
 	    {}
 	    newmoves)))
 
-; gets map of all possible move destination points to ap cost
 (defn possible-moves 
+  "gets map of all possible move destination points to ap cost"
   ([game unit x y]
 	  (let [aps (:aps unit)
 	        moves {(point x y) 0}]
@@ -541,6 +541,9 @@
 
 ; ======================================================================================================================
 ; Ability implementations
+
+(defn get-abilities [pred u]
+  (filter pred (:abilities u)))
 
 ; Move ability
 

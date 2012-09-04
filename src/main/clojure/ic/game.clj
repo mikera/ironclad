@@ -62,7 +62,8 @@
             ;(println updates)
             updates)
         (throw (Error. (str "Event type not recognised: " event))))))
-   
+
+ 
 (defn update [g update]
   (let [type ( :update-type update)] 
     ;(println (str "Game update: " update))
@@ -143,6 +144,15 @@
           g)
       (throw (Error. (str "Update type not recognised: " update))))))
 
+ 
+(defn apply-command [g command]
+  "Applies a command to a game, returns updated game"
+  (let [updates (get-updates g command)]
+    (reduce (fn [g u]
+              (update g u))
+            g 
+            updates)))
+
 ;; ================================================================================
 ;; Command handling
 
@@ -181,7 +191,7 @@
       (throw (Error. (str "God command not handled: " event))))))
 
 (defn handle-command-event [g command]
-  "Handle a command event to a single unit"
+  "Handle a command event to a single unit, returns list of updates"
   (let [{ cmd :command-type  uid :uid abname :ability  tx :tx ty :ty player-id :player-id} command
         sp (location-of-unit g uid)]
     ;(println event)

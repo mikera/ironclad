@@ -1,28 +1,32 @@
 (ns ic.command
-  "Functions for generating game commands")
+  "Functions for generating game commands"
+  (:require [mc.util :as mcu]))
 
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* true)
 
 (defrecord Command [
-   ^String command-type
-   ^long uid
-   ^String ability
-   ^long tx
-   ^long ty
-   ^Object param]
+   ^String command-type   ;; type of command, e.g. "Command" of "God-Command"
+   ^long uid              ;; unit id
+   ^String ability        ;; Ability name, e.g. "Move: Foot"
+   ^long tx               ;; target x location
+   ^long ty               ;; target y location
+   ^Object param          ;; additional paramter if needed, often nil
+   ]
   Object
     (toString [self] (str (merge {} self))))
 
-(defn command [uid ability tx ty param]
-  (Command. 
-     "Command"
-     uid 
-     ability 
-     tx 
-     ty
-     param))
+(defn command 
+  "Creates a command for a specific unit"
+  ([unit-or-id ability-name tx ty]
+    (command unit-or-id ability-name tx ty nil)) 
+  ([unit-or-id ability-name tx ty param]
+	  (let [uid (or 
+                (and (instance? ic.engine.Unit unit-or-id) 
+                     (or (:id unit-or-id) (mcu/error "No ID for command:" unit-or-id))) 
+                unit-or-id)]
+     (Command. "Command" uid ability-name tx ty param))))
 
 (defn god-command [update]
   {:command-type "God-Command" 

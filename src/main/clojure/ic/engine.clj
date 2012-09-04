@@ -1,6 +1,7 @@
 (ns ic.engine
   "The main Ironclad game engine"
   (:use [ic protocols])
+  (:require [mc util])
   (:require [clojure.set]))
 
 (set! *warn-on-reflection* true)
@@ -194,6 +195,9 @@
       (:source-image t))
     (drawable-icon [t]
      (mikera.ui.BufferedImageIcon. (source-image t) (sourcex t) (sourcey t) (sourcew t) (sourceh t))))
+
+;; ==================================================================
+;; utility functions
 
 ;; ====================================================================
 ;; player data structure and functions

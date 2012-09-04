@@ -1,6 +1,6 @@
 (ns ic.map  
   "This file contains map data and terrain definitions"
-  (:use [mc.util])
+  (:require [mc.util])
   (:use [ic protocols engine])
   (:require [ic.graphics])
   (:require [clojure.set]) 
@@ -50,7 +50,7 @@
         (merge default-terrain-data props))))
   ([parent-name props] 
 	  (make-terrain
-		  (merge (find-first #(= parent-name (:name %)) @temp-terrain-types) props))))
+		  (merge (mc.util/find-first #(= parent-name (:name %)) @temp-terrain-types) props))))
 
 
 ;; ============================================== 
@@ -179,7 +179,7 @@
 ; Map builders
 
 (defn rand-terrain []
-  (terrain (rand-choice [
+  (terrain (mc.util/rand-choice [
       "Impassable Mountain" "Mountain" "Rocky Hills" "Wooded Hills" "Trench" 
       "Hills" "Hills" "Hills" "Hills"
       "Grassland" "Grassland" "Grassland" "Grassland" "Grassland" "Grassland" 

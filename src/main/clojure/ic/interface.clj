@@ -70,16 +70,16 @@
 
 ; Screen coordinate functions
 
-(defn logical-positionx [sx sy]
+(defn logical-positionx ^double [sx sy]
   (* ic.renderer/RATIO (/ sx ic.renderer/X_OFFSET) ))
 
-(defn logical-positiony [sx sy]
+(defn logical-positiony ^double [sx sy]
   (/ sy ic.renderer/Y_OFFSET) )
 
-(defn mapx [sx sy]
+(defn mapx ^long [sx sy]
   (Hex/toLocationX (logical-positionx sx sy) (logical-positiony sx sy)))
 
-(defn mapy [sx sy]
+(defn mapy ^long [sx sy]
   (Hex/toLocationY (logical-positionx sx sy) (logical-positiony sx sy)))
 
 (def ^DefaultListModel ability-list-model  
@@ -344,7 +344,7 @@
             deploy-unit
 				      (ic.dialogs/show-select-unit-dialog 
 				        "Select a unit to delpoy: " 
-				        (filter #(ic.units/suitable-terrain % (get-terrain game tx ty)) contents))
+				        (filter #(ic.units/suitable-terrain? % (get-terrain game tx ty)) contents))
             pos (find-position contents deploy-unit)]
         pos)
     :default nil))

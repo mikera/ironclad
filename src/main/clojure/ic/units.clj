@@ -220,10 +220,12 @@
          (can-enter? unit tu)
          false)))
 
-(defn suitable-terrain? [unit terrain]
-  (or 
-    (> (base-move-cost unit terrain) 0)
-    (and (:has-rail terrain) (= (:move-type unit) MOVETYPE_RAIL))))
+(defn suitable-terrain? 
+  "Return true if the unit can move on the given terrain"
+  ([unit terrain]
+    (or 
+      (> (base-move-cost unit terrain) 0)
+      (and (:has-rail terrain) (= (:move-type unit) MOVETYPE_RAIL)))))
 
 (defn move-improvement-list 
   ([game unit aps pos a moves]
@@ -815,7 +817,7 @@
         abs))))
 
 (defn ai-evaluate-best-attack [game unit sx sy aps-left]
-  "Values the most efective attack ability for a unit (after moving)"
+  "Values the most efective attack ability for a unit (after moving to (sx,sy))"
   (let [abs (:abilities unit)]
     (second
 	    (reduce
@@ -841,10 +843,12 @@
 	      [nil 0]
 	      abs))))
 
-(defn ai-evaluate-end-position [game unit x y aps-left]
-  (max
-    0
-    (+ (ai-evaluate-best-attack game unit x y aps-left) (- AI_RANDOM_MOVE_FACTOR))))
+(defn ai-evaluate-end-position 
+  "Returns a valuation of the end position of a enit, i.e assuming no more moves."
+  ([game unit x y aps-left]
+    (max
+      0
+      (+ (ai-evaluate-best-attack game unit x y aps-left) (- AI_RANDOM_MOVE_FACTOR)))))
 
 (defn ai-best-command [game unit x y]
   (let [targets (ic.units/get-ability-targets game unit x y)
@@ -1657,7 +1661,7 @@
   (^ic.engine.Unit [name] 
 	  (if-let [type (unit-type-map name)]
 		  type
-	    (throw (Error. (str "Unit type not found: " name)))))
+	    (error "Unit type not found: " name)))
   (^ic.engine.Unit [name props]
     (merge (unit name) props)))
 

@@ -18,11 +18,12 @@
 		</license>
 	</licenses>
 	
-	 <scm>
-		<connection>scm:git:git@github.com:mikera/ironclad.git</connection>
-		<url>scm:git:git@github.com:mikera/ironclad.git</url>
-		<developerConnection>scm:git:git@github.com:mikera/ironclad.git</developerConnection>
+	<scm>
+		<connection>scm:git:git@github.com:mikera/${project.artifactId}.git</connection>
+		<url>scm:git:git@github.com:mikera/${project.artifactId}.git</url>
+		<developerConnection>scm:git:git@github.com:mikera/${project.artifactId}.git</developerConnection>
   	</scm>
+
 	
 
 	<build>

@@ -37,7 +37,7 @@
     (let [newframe (JFrame. "Ironclad: Steam Legions")
           screensize (mikera.ui.Tools/getScreenSize)
           fw (min 1280 (.width screensize))
-          fh (min 960 (.height screensize))]
+          fh (min 850 (.height screensize))]
       (doto newframe
 			  (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
 			  (.setSize (Dimension.  fw fh)) 

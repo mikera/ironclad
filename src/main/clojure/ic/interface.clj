@@ -750,7 +750,7 @@
 
 (defn ^MouseAdapter make-mouse-adapter []
   (proxy [MouseAdapter] []
-    (mousePressed [^MouseEvent me]
+    (mouseClicked [^MouseEvent me]
       (let [button (.getButton me)
             [x y] (@state :mouseover)]
 			   ;(println (str "Mouse pressed: " x "," y " : " (.toString me)))

@@ -483,43 +483,49 @@
             {})))
       (damage-unit target game tx ty actual-damage))))
 
+(defn can-use-attack? [unit ability]
+  (>= (:aps unit) (attack-cost-aps ability unit)))
+
 (defn can-attack [ability unit target game sx sy tx ty]
   "Return true if unit is able to attack a target with the given ability"
   (let [distance (mikera.engine.Hex/distance sx sy tx ty)]	
     (and 
-	    (<= (:min-range ability) distance)
-	    (>= (:max-range ability) distance)
+	    (<= distance (:max-range ability) )
+	    (>= distance (:min-range ability) )
 	    (not (allied-unit? unit target))
-	    (>= (:aps unit) (attack-cost-aps ability unit))
+	    (can-use-attack? unit ability)
 	    (> (attack-power ability unit target) 0))))
 
 
 
-(defn get-best-attack [unit target game sx sy tx ty]
+(defn get-best-attack 
   "Gets the most efective attack ability for a unit against a given target, nil if not possible"
-  (let [abs (:abilities unit)]
-    (reduce
-      (fn [ab newab] 
-        (if 
-          (and
-            (:is-attack newab)
-            (can-attack newab unit target game sx sy tx ty)
-            (or 
-              (nil? ab)
-              (>= (calc-damage newab unit target game tx ty) (calc-damage newab unit target game tx ty))))
-          newab
-          ab))
-      nil
-      abs)))
+  ([unit target game sx sy tx ty]
+    (get-best-attack unit target game sx sx tx ty identity)) 
+  ([unit target game sx sy tx ty ability-pred]
+	  (let [abs (:abilities unit)]
+	    (reduce
+	      (fn [ab newab] 
+	        (if 
+	          (and
+              (:is-attack newab)
+	            (ability-pred newab)
+	            (can-attack newab unit target game sx sy tx ty)
+	            (or 
+	              (nil? ab)
+	              (>= (calc-damage newab unit target game tx ty) (calc-damage ab unit target game tx ty))))
+	          newab
+	          ab))
+	      nil
+	      abs))))
 
 (defn try-return-fire [ unit target game sx sy tx ty]
   (if (:return-fire unit)
-    (let [ability (get-best-attack unit target game sx sy tx ty)]
-      (if (nil? ability)
-        (list )
-        (let [apcost (attack-cost-aps ability unit)
-              aps (:aps unit)]
-          (try-fire ability unit target game sx sy tx ty aps apcost))))))
+    (if-let [ability (get-best-attack unit target game sx sy tx ty)]
+      (let [apcost (attack-cost-aps ability unit)
+            aps (:aps unit)]
+        (try-fire ability unit target game sx sy tx ty aps apcost))
+      '())))
 
 
 (defn allowable-attacks [game unit ability x y]
@@ -801,7 +807,7 @@
     (nameString [ability unit] 
       (str 
         (:name ability) "\n"
-        "  - Action point cost: " (:cost ability) (if (:consume-all-aps ability) "+" "") "\n"
+        "  - Action point cost: " (:cost ability) (if (:consume-all-aps ability) "*" "") "\n"
         "  - Power: " (:power ability) "\n" 
         "  - Range: " (:min-range ability) "-" (:max-range ability))))
 
@@ -910,6 +916,7 @@
     attack-type
     {:is-attack true
      :min-range (or (:min-range attack-type) 1)
+     :max-range (or (:max-range attack-type) 1)
      :ability-colour java.awt.Color/RED
      :sound (or (attack-sound-map (:attack-type attack-type)) "Cannon fire")}))
 

@@ -86,13 +86,14 @@
         (assoc g
           :units
           (let [units (:units g)
-                uid (:uid update)
-                ^ic.engine.Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))
-                x (.x pos)
-                y (.y pos)
-                unit (get-unit g x y)
-                updated-unit (merge unit (:properties update))]
-            (mset units x y updated-unit)) )
+                uid (:uid update)]
+            ;; check unit actually exists, might have been destroyed....
+            (if-let [^ic.engine.Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))]
+              (let [x (.x pos)
+                    y (.y pos)
+                    unit (get-unit g x y)
+                    updated-unit (merge unit (:properties update))]
+                (mset units x y updated-unit)))))
       "Player properties"
         (let [players ^mikera.persistent.LongMap (:players g)
               pid (long (:player-id update))

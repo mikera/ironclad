@@ -2,6 +2,8 @@ package ic;
 
 import javax.swing.JApplet;
 
+import clojure.lang.RT;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Label;
@@ -43,7 +45,8 @@ public class IronClad extends JApplet {
 	public static void main(String[] args) throws Exception {
 		START_SCREEN=true;
 		System.setSecurityManager(null);
-
+		
+		RT.loadResourceScript("ic/main.clj");
 	}
 
 }

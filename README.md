@@ -1,6 +1,6 @@
 # Ironclad
 
-Ironclad: Steam Legions - A steampunk strategy game in Clojure
+Ironclad: Steam Legions - A steampunk strategy wargame in Clojure
 
 ### About
 
@@ -15,4 +15,4 @@ Interesting technical features:
 
 ### Storyline
 
-In the land of Europa war is brewing. 
+In the land of Europa war is brewing.

@@ -344,7 +344,8 @@
               (get-ai-command g player u x y))))
         (seq (.values unit-locs))))))
 
-; next turn handling
+;; ===========================================
+;; next-turn handling
 
 (defn handle-unit-turn [g u x y millis base]
   "Handles the end of turn event for a unit, returning a list of updates"

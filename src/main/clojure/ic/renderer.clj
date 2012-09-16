@@ -450,7 +450,7 @@
                   colour (:colour anim)
                   tx (- (screenx x y) 0)
                   ty (- (screeny x y) 0 (int (/ elapsed 20)))]
-              (.setFont g ic.graphics/main-font)
+              (.setFont g ic.graphics/effect-text-font)
               (.setColor g colour)
               ;(.fillRect g tx ty 15 15)
               (mikera.ui.Draw/drawCentredText g text tx ty)

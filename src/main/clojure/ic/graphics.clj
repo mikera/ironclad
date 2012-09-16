@@ -26,6 +26,11 @@
     main-font
     (float 13.0)))
 
+(def ^java.awt.Font effect-text-font 
+  (.deriveFont
+    main-font
+    (float 26.0)))
+
 
 (def ^java.awt.image.BufferedImage icon-image
   (mc.resource/load-image "pov/icons.png"))

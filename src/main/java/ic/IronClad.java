@@ -8,15 +8,13 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Label;
 
-
 @SuppressWarnings("serial")
 public class IronClad extends JApplet {
 
 	public static JApplet applet=null;
 
 	public static boolean START_SCREEN=true;
-	
-	
+		
 	public IronClad() {
 		applet=this;
 		
@@ -48,5 +46,4 @@ public class IronClad extends JApplet {
 		
 		RT.loadResourceScript("ic/main.clj");
 	}
-
 }

@@ -27,17 +27,17 @@
 		<dependency>
 			<groupId>net.mikera</groupId>
 			<artifactId>mikera</artifactId>
-			<version>1.4.0</version>
+			<version>1.4.1</version>
 		</dependency>
 		<dependency>
 			<groupId>net.mikera</groupId>
 			<artifactId>steampunk-laf</artifactId>
-			<version>0.0.2</version>
+			<version>0.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>net.mikera</groupId>
 			<artifactId>mikera-clojure</artifactId>
-			<version>1.0.2</version>
+			<version>1.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.clojure</groupId>

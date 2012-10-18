@@ -4,7 +4,7 @@
   (:use [mc.util])
   (:use [ic protocols engine game units map gamefactory])
   (:import [mikera.util Tools Resource])
-  (:use [clojure.data.json]))
+  (:require [clojure.data.json :as json]))
 
 (declare decode)
 (declare encode-map)
@@ -115,13 +115,13 @@
 
 
 (defn serialize-to-json [value]
-  (json-str value))
+  (json/write-str value))
 
 (defn serialize [s]
   (serialize-to-json (encode s)))
 
 (defn deserialize-from-json [string]
-  (read-json string false)) ; read withoud keywordizing
+  (json/read-str string))
 
 ;; keys in maps don't get encoded
 (defn encode-map [s]

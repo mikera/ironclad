@@ -11,7 +11,7 @@ import javax.swing.border.EmptyBorder;
 
 import mikera.ui.JIcon;
 
-@SuppressWarnings({ "serial" })
+@SuppressWarnings({ "serial", "rawtypes" })
 public class ListCellRenderer extends JPanel implements
 		javax.swing.ListCellRenderer {
 

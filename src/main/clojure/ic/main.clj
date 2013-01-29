@@ -11,7 +11,7 @@
            (ic IronClad)
            (mikera.util Tools)
            (mikera.ui.steampunk SteamPunkBorder PanelBorder SteamPunkStyle)
-           (mikera.ui JIcon)
+           (mikera.gui JIcon)
            (mikera.web WebUtils)))
 
 (set! *warn-on-reflection* true)
@@ -222,28 +222,29 @@ Hints:
 (def ^JPanel game-screen (JPanel.))
 
 (def return-to-title-function
-  #(switch-to-screen "Title"))
+  #(do 
+     (if IronClad/DEBUG_MODE (println "Swiching to title screen."))
+     (switch-to-screen "Title")))
 
-(defn- main []
+(defn main 
   "Main function"
-  (javax.swing.SwingUtilities/invokeLater 
-    (fn []
-      (doto ^JComponent (.getContentPane frame)
-        (.add title-screen "Title")
-        (.add game-screen "Game Screen")
-        (.add tutorial-screen "Tutorial Menu")
+  ([]
+    (if IronClad/DEBUG_MODE (println "Running ic.main/main...."))
+    (javax.swing.SwingUtilities/invokeLater 
+      (fn []
+        (if IronClad/DEBUG_MODE (println "Running main screen stetup...."))
+        (doto ^JComponent (.getContentPane frame)
+          (.add title-screen "Title")
+          (.add game-screen "Game Screen")
+          (.add tutorial-screen "Tutorial Menu")
         (.validate))
-      (switch-to-screen (if (IronClad/START_SCREEN) "Title" "Game Screen"))
-      (reset! ic.interface/exit-function return-to-title-function)
-      (ic.interface/launch-window game-screen)
-      (ic.sounds/play "Fanfare")))) 
+        (switch-to-screen (if (IronClad/START_SCREEN) "Title" "Game Screen"))
+        (reset! ic.interface/exit-function return-to-title-function)
+        (ic.interface/launch-window game-screen)
+        (ic.sounds/play "Fanfare"))))) 
 
+(if (not IronClad/JAVA_LAUNCHED)
+  (main))
 ;; (run-all-tests (re-pattern "ic.*"))
 ;; (run-all-tests (re-pattern "mc.*"))
-
-(do 
-  
-  (main))
-
-(ns ic.interface)
 

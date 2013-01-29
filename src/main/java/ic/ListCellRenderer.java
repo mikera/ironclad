@@ -9,7 +9,7 @@ import javax.swing.JTextArea;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
-import mikera.ui.JIcon;
+import mikera.gui.JIcon;
 
 @SuppressWarnings({ "serial", "rawtypes" })
 public class ListCellRenderer extends JPanel implements

@@ -3,7 +3,7 @@
              (javax.swing.plaf.synth SynthLookAndFeel)
              (java.awt Component Insets GridLayout BorderLayout FlowLayout Rectangle Dimension Graphics Color CardLayout)
              (mikera.ui.steampunk SteamPunkStyleFactory SteamPunkStyle)
-             (mikera.ui Tools)
+             (mikera.gui Tools)
              (ic IronClad)))
 
 (set! *warn-on-reflection* true)
@@ -35,7 +35,7 @@
   (if (ic.IronClad/applet) 
     ic.IronClad/applet
     (let [newframe (JFrame. "Ironclad: Steam Legions")
-          screensize (mikera.ui.Tools/getScreenSize)
+          screensize (mikera.gui.Tools/getScreenSize)
           fw (min 1280 (.width screensize))
           fh (min 850 (.height screensize))]
       (doto newframe

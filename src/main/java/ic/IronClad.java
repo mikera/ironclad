@@ -2,7 +2,7 @@ package ic;
 
 import javax.swing.JApplet;
 
-import clojure.lang.RT;
+import mikera.cljutils.Clojure;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -13,7 +13,9 @@ public class IronClad extends JApplet {
 
 	public static JApplet applet=null;
 
+	public static boolean JAVA_LAUNCHED=false;
 	public static boolean START_SCREEN=true;
+	public static boolean DEBUG_MODE=true;
 		
 	public IronClad() {
 		applet=this;
@@ -41,9 +43,12 @@ public class IronClad extends JApplet {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
+		JAVA_LAUNCHED=true;
 		START_SCREEN=true;
+		DEBUG_MODE=false;
 		System.setSecurityManager(null);
 		
-		RT.loadResourceScript("ic/main.clj");
+		Clojure.require("ic.main");
+		Clojure.eval("(ic.main/main)");
 	}
 }

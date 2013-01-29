@@ -10,6 +10,7 @@
   (:require [ic.sounds])
   (:require [ic.units])
   (:import [java.awt Rectangle Dimension Graphics Color])
+  (:import (mikera.gui Draw))
   (:import (mikera.util Rand))
   (:import (mikera.engine Hex)))
 
@@ -100,7 +101,7 @@
     (draw-cursor-icon g x y elv (ability-icon ability))
     (.setColor g (or (:ability-colour ability) java.awt.Color/WHITE))
     (.setFont g ic.graphics/mini-font)
-    (mikera.ui.Draw/drawCentredText g (str apcost) tx ty)))
+    (Draw/drawCentredText g (str apcost) tx ty)))
 
 (defn draw-hex-terrain [^Graphics g x y scrollx scrolly  elv ^ic.engine.Terrain t]
   (let [
@@ -181,7 +182,7 @@
           (do
             (.setFont g ic.graphics/mini-font)
             (.setColor g Color/YELLOW)
-            (mikera.ui.Draw/drawCentredText g (str "[" cc "]") (+ tx 50) (+ ty 10)))))))
+            (Draw/drawCentredText g (str "[" cc "]") (+ tx 50) (+ ty 10)))))))
 
 (defn draw-unit [^Graphics g x y elv ^ic.engine.Unit u]
   (let [tx (int (- (screenx x y) (centrex u)))
@@ -453,7 +454,7 @@
               (.setFont g ic.graphics/effect-text-font)
               (.setColor g colour)
               ;(.fillRect g tx ty 15 15)
-              (mikera.ui.Draw/drawCentredText g text tx ty)
+              (Draw/drawCentredText g text tx ty)
               anim))
         "Shoot"
           (if (>= elapsed SHOOT_ANIMATION_MILLIS) 

@@ -3,5 +3,9 @@ package mikera.ironclad;
 import mikera.cljunit.ClojureTest;
 
 public class FullClojureTests extends ClojureTest {
-  // run all tests
+  
+	@Override
+	public String filter() {
+		return "ic.test";
+	}
 }

@@ -24,7 +24,8 @@
            (mikera.util Tools)
            (mikera.ui.steampunk PanelBorder)
            (ic ListCellData)
-           (net.miginfocom.swing MigLayout)))
+           (net.miginfocom.swing MigLayout)
+           (mikera.gui BufferedImageIcon)))
 
 (def DEBUG-PRINT-COMMANDS false)
 
@@ -289,7 +290,7 @@
 			                    sy (+ 8 32 (* ic.renderer/TILESIZE (ability-icon ab)))
 			                    sw (- ic.renderer/TILESIZE 64)
 			                    sh (- ic.renderer/TILESIZE 80)]
-			                (mikera.ui.BufferedImageIcon.
+			                (BufferedImageIcon.
 			                  ic.graphics/icon-image
 			                  sx sy sw sh 40 32))	            
 			              (nameString ab u) 

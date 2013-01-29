@@ -194,7 +194,7 @@
 	  (source-image [t]
       (:source-image t))
     (drawable-icon [t]
-     (mikera.ui.BufferedImageIcon. (source-image t) (sourcex t) (sourcey t) (sourcew t) (sourceh t))))
+     (mikera.gui.BufferedImageIcon. (source-image t) (sourcex t) (sourcey t) (sourcew t) (sourceh t))))
 
 ;; ==================================================================
 ;; utility functions
@@ -246,7 +246,7 @@
     (source-image [u]
       (:source-image u))
     (drawable-icon [u]
-     (mikera.ui.BufferedImageIcon. 
+     (mikera.gui.BufferedImageIcon. 
 			(source-image u) 
 			(+ (sourcex u) UNIT_ICON_CLIP) 
 			(+ (sourcey u) UNIT_ICON_CLIP) 

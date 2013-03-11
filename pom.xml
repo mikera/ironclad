@@ -22,6 +22,25 @@
 		<url>scm:git:git@github.com:mikera/${project.artifactId}.git</url>
 		<developerConnection>scm:git:git@github.com:mikera/${project.artifactId}.git</developerConnection>
 	</scm>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>ic.IronClad</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 	<dependencies>
 		<dependency>

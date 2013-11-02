@@ -15,4 +15,6 @@ Interesting technical features:
 
 ### Storyline
 
-In the land of Europa war is brewing.
+In the land of Europa war is brewing..... 
+
+Take command of a steam-powered army and crush your opponents in glorious battle!

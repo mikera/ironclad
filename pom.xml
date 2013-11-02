@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>net.mikera</groupId>
 			<artifactId>mikera</artifactId>
-			<version>1.5.1</version>
+			<version>1.5.2</version>
 		</dependency>
 		<dependency>
 			<groupId>net.mikera</groupId>
@@ -61,33 +61,33 @@
 		<dependency>
 			<groupId>org.clojure</groupId>
 			<artifactId>data.json</artifactId>
-			<version>0.2.2</version>
-		</dependency>
-		<dependency>
-			<groupId>net.mikera</groupId>
-			<artifactId>cljunit</artifactId>
-			<version>0.2.0</version>
-			<scope>test</scope>
+			<version>0.2.3</version>
 		</dependency>
 		<dependency>
 			<groupId>net.mikera</groupId>
 			<artifactId>mikera-gui</artifactId>
-			<version>0.1.0</version>
+			<version>0.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>net.mikera</groupId>
 			<artifactId>mathz</artifactId>
-			<version>0.1.0</version>
+			<version>0.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>net.mikera</groupId>
 			<artifactId>clojure-utils</artifactId>
-			<version>0.2.3</version>
+			<version>0.5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.clojure</groupId>
 			<artifactId>clojure</artifactId>
 			<version>1.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.mikera</groupId>
+			<artifactId>cljunit</artifactId>
+			<version>0.3.0</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	

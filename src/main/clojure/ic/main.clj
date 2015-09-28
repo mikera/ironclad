@@ -226,7 +226,7 @@ Hints:
      (if IronClad/DEBUG_MODE (println "Swiching to title screen."))
      (switch-to-screen "Title")))
 
-(defn main 
+(defn -main 
   "Main function"
   ([]
     (if IronClad/DEBUG_MODE (println "Running ic.main/main...."))
@@ -244,7 +244,7 @@ Hints:
         (ic.sounds/play "Fanfare"))))) 
 
 (if (not IronClad/JAVA_LAUNCHED)
-  (main))
+  (-main))
 ;; (run-all-tests (re-pattern "ic.*"))
 ;; (run-all-tests (re-pattern "mc.*"))
 

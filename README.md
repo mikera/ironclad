@@ -18,3 +18,13 @@ Interesting technical features:
 In the land of Europa war is brewing..... 
 
 Take command of a steam-powered army and crush your opponents in glorious battle!
+
+### Building and running
+
+To build Ironclad, it is recommended to use Maven to create a single jar with all dependencies
+
+```
+mvn assembly:single
+```
+
+This will create a runnable jar in the output directory (usually `target/ironclad-0.x.x.some-extension.jar`)

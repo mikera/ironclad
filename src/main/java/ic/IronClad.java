@@ -49,6 +49,6 @@ public class IronClad extends JApplet {
 		System.setSecurityManager(null);
 
 		Clojure.require("ic.main");
-		Clojure.eval("(ic.main/main)");
+		Clojure.eval("(ic.main/-main)");
 	}
 }

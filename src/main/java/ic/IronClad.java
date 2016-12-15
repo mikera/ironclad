@@ -22,6 +22,7 @@ public class IronClad extends JApplet {
 
 	}
 
+	@Override
 	public void init() {
 		setBackground(Color.black);
 		try {
@@ -31,10 +32,12 @@ public class IronClad extends JApplet {
 		}
 	}
 
+	@Override
 	public void update(Graphics g) {
 		paint(g);
 	}
 
+	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
 	}

@@ -1,7 +1,7 @@
 (ns ic.engine
   "The main Ironclad game engine"
-  (:use [ic protocols])
-  (:require [mc util])
+  (:require [ic.protocols :refer [PLocationSet]])
+  (:require [mc util] :refer [get-points])
   (:require [clojure.set]))
 
 (set! *warn-on-reflection* true)

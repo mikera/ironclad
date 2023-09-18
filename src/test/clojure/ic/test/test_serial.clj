@@ -1,7 +1,13 @@
 (ns ic.test.test-serial
-  (:use clojure.test)
-  (:use mc.util)
-  (:use [ic protocols engine map units serial]))
+  (:require [clojure.test :refer [deftest is]]
+            [ic.engine :refer [player]]
+            [ic.units :as units])
+  (:require [mc.util :refer []])
+  (:require 
+   [ic.serial :refer [decode encode deserialize serialize]]
+   [ic.map :refer [new-map map-difference]]
+   [engine :as engine :refer [new-map map-difference]]
+   [ic protocols engine map units serial]))
 
 (defn coded-ok? [x]
   (and
@@ -44,9 +50,9 @@
 
 
 (deftest test-basic-types []
-  (let [a (point 1 2)
-        b (unit "Steam Tank")
-        c (terrain "Grassland")
+  (let [a (engine/point 1 2)
+        b (units/unit "Steam Tank")
+        c (engine/terrain "Grassland")
         d (player {:foo :bar})] 
     (is (= nil (deserialize (serialize nil))))
     (is (= a (deserialize (serialize a))))

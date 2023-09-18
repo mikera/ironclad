@@ -1,11 +1,11 @@
 (ns ic.interface 
   "The main Ironclad user interface"
-  (:use [ic.protocols])
-  (:use [mc.util])
+  (:require [ic.protocols :refer [Location get-x ]])
+  (:require [mc.util :as mcu])
   (:require [mc.resource])
   (:require [mc.ui])
   (:require [ic.ui])
-  (:use [ic engine game])
+  (:require [ic engine game])
   (:require [ic.command])
   (:require [ic.dialogs])
   (:require [ic.gamefactory])

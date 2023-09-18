@@ -1,18 +1,23 @@
 (ns ic.test.test-units
-  (:use clojure.test)
-  (:use [ic protocols map engine command game units])
-  (:require [mc.util :as mcu])
-  (:import [ic.units.Unit]))
+  (:require [clojure.test :refer [deftest is]]
+            [ic.command :refer [command]]
+            [ic.engine :refer [add-unit get-unit location-of-unit new-game
+                               player point set-terrain terrain]]
+            [ic.game :refer [apply-command]]
+            [ic.protocols :refer [add-player validate]]
+            [ic.units :as units :refer :all])
+  (:require [ic protocols map engine command game units])
+  (:require [mc.util :as mcu]))
 
 
 (deftest test-identity
-  (let [u (unit "Steam Tank")]
+  (let [u (units/unit "Steam Tank")]
     (is (= (ic.units/unit "Steam Tank") (ic.units/unit-type-map "Steam Tank")))
-    (is (= u (unit "Steam Tank")))))
+    (is (= u (units/unit "Steam Tank")))))
 
 
 (deftest t2
-  (let [u (unit "Steam Tank")]
+  (let [u (units/unit "Steam Tank")]
     (is (= "Steam Tank" (:name u)))
     (is (= 100 ((TARGET_EFFECT ATTACKTYPE_DEATH_RAY) UNITTYPE_INFANTRY)))
     (is (not (nil? type)))
@@ -23,20 +28,20 @@
 (defn test-abilities [u a]
   (if (:is-build a)
     (doseq [bt (:build-list a)]
-      (is (unit-type-map bt))))
+      (is (units/unit-type-map bt))))
   (if (:is-attack a)
-    (doseq [tu unit-types]
-      (is (>= (attack-power a u tu) 0)))))
+    (doseq [tu units/unit-types]
+      (is (>= (units/attack-power a u tu) 0)))))
 
 (deftest test-unit-types
-  (doseq [u unit-types]
+  (doseq [u units/unit-types]
     (is (not (nil? (:contents u))))
     (doseq [a (:abilities u)]
       (test-abilities u a))
     (doseq [t ic.map/terrain-types]
-      (is (base-move-cost u t)))
-    (doseq [u2 unit-types]
-      (can-enter? u u2))))
+      (is (units/base-move-cost u t)))
+    (doseq [u2 units/unit-types]
+      (units/can-enter? u u2))))
 
 
 (deftest test-effects

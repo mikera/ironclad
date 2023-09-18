@@ -1,9 +1,9 @@
 (ns ic.units
   "This file contains unit definitions and code for unit abilities"
-  (:use [clojure.test])
-  (:use [mc.util])
-  (:use [ic protocols engine map graphics])
-  (:use [ic.command])
+  (:require [clojure.test])
+  (:require [mc.util :refer :all])
+  (:require [ic protocols engine map graphics])
+  (:require [ic.command])
   (:require [mc.csv])
   (:require [ic.lib])
   (:import [mikera.engine Hex])

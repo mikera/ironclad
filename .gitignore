@@ -3,4 +3,6 @@
 .project
 .settings
 .classpath
+.clj-kondo
 /bin/
+.lsp

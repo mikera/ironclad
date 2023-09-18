@@ -1,9 +1,9 @@
 (ns ic.serial
   "Game data serialization and deserialization routines"
-  (:use [clojure.test])
-  (:use [mc.util])
-  (:use [ic protocols engine game units map gamefactory])
-  (:import [mikera.util Tools Resource])
+  (:require [ic.engine :refer [point]]
+            [mc.util :as mcu])
+  (:require [ic protocols engine game units map gamefactory])
+  (:import [mikera.util Resource Tools])
   (:require [clojure.data.json :as json]))
 
 (declare decode)
@@ -46,14 +46,14 @@
       (let [uname (:name s)]
 	      ["Unit"
 	       uname
-	       (encode-map (map-difference s (ic.units/unit-type-map uname)))]))
+	       (encode-map (mcu/map-difference s (ic.units/unit-type-map uname)))]))
 
   ic.engine.Terrain  
     (encode [s]
       (let [tname (:name s)]
         ["Terrain"
          tname
-         (encode-map (map-difference s (ic.map/terrain-type-map tname)))]))
+         (encode-map (mcu/map-difference s (ic.map/terrain-type-map tname)))]))
 
   ic.engine.Player  
     (encode [s]
@@ -111,7 +111,7 @@
     
   java.lang.Object
     (encode [s] 
-      (error "Failure trying to encode: " s)))
+      (mcu/error "Failure trying to encode: " s)))
 
 
 (defn serialize-to-json [value]
@@ -152,16 +152,15 @@
 (defn decode-point [[dtype x y]]
   (point x y))
 
-
 (defn decode-sparsemap [[dtype tx ty w h rows]]
-  (reduce-indexed 
+  (mcu/reduce-indexed 
     (fn [^mikera.persistent.SparseMap sm ^Integer iy row]
-      (reduce-indexed
+      (mcu/reduce-indexed
         (fn [^mikera.persistent.SparseMap sm ^Integer ix v]
-          (mset sm (+ tx ix) (+ ty iy) (decode v)))
+          (mcu/mset sm (+ tx ix) (+ ty iy) (decode v)))
         sm
         row))
-    (new-map)
+    (mcu/new-map)
     rows))
 
 (defn decode-longmap [[dtype m]]

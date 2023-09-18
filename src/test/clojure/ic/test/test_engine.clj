@@ -1,7 +1,9 @@
 (ns ic.test.test-engine
-  (:use clojure.test)
-  (:use mc.util)
-  (:use [ic protocols engine]))
+  (:require 
+   [clojure.test :refer [deftest is]])
+  (:require
+   [ic.engine :refer [player new-game]]
+   [ic.protocols :refer [update-player]]))
 
 (defn equal-but-not-identical? [a b]
   (is (= a b))

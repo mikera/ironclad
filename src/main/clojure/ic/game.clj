@@ -3,10 +3,10 @@
   (:use [ic protocols map engine])
   (:require [ic.units])
   (:use [ic.command])
-  (:require [mc.util])
-  (:import [mikera.persistent.SparseMap])
-  (:import [mikera.persistent.LongMap])
-  (:import [mikera.util.Rand])
+  (:require [mc.util :as mcu])
+  (:import [mikera.persistent SparseMap])
+  (:import [mikera.persistent LongMap])
+  (:import [mikera.util Rand])
   (:use [mc.util])
   (:use [clojure.test]))
 
@@ -33,14 +33,14 @@
     (fn [ss [uid ^ic.engine.Point pos]]
       (let [unit (get-unit game (.x pos) (.y pos))
             player-side (:side unit)]
-        (if (not (list-contains? ss player-side))
+        (if (not (mcu/list-contains? ss player-side))
           (conj ss player-side)
           ss)))
     '()
     (:unit-locations game))))
 
 (defn get-player-for-side [g side]
-  (find-first
+  (mcu/find-first
     (fn [player]
       (= (:side player) side))
     (.values ^mikera.persistent.LongMap (:players g))))
@@ -355,7 +355,7 @@
         aps (:aps u)
         contents (:contents u)
         new-aps (int (min apsmax (+ ap-bonus (max 0 aps))))]
-    (list-not-nil
+    (mcu/list-not-nil
 	    (if 
 	      (not (= aps new-aps))
 	      (msg-update-unit u :aps new-aps)
@@ -363,7 +363,7 @@
       (if
         (not (empty? contents))
         (msg-update-unit u :contents 
-          (map-vector (fn [unit] (assoc unit :aps (:apsmax unit))) contents))
+          (mcu/map-vector (fn [unit] (assoc unit :aps (:apsmax unit))) contents))
         nil))))
 
 

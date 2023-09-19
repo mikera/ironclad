@@ -2,11 +2,12 @@
   "Game handling logic and AI routines"
   (:use [ic protocols map engine])
   (:require [ic.units])
-  (:use [ic.command])
+  (:require [ic.command :as cmd])
   (:require [mc.util :as mcu])
-  (:import [mikera.persistent SparseMap])
-  (:import [mikera.persistent LongMap])
-  (:use [mc.util])
+  (:refer-clojure :exclude [update])
+  (:import [mikera.persistent LongMap SparseMap])
+  (:import [ic.engine Point])
+  (:require [mc.util :as mcu])
   (:use [clojure.test]))
 
 
@@ -30,7 +31,7 @@
   "Returns a sorted list of sides with active units"
   [game]
   (sort (reduce
-    (fn [ss [_uid ^ic.engine.Point pos]]
+    (fn [ss [_uid ^Point pos]]
       (let [unit (get-unit game (.x pos) (.y pos))
             player-side (:side unit)]
         (if (not (mcu/list-contains? ss player-side))
@@ -49,7 +50,7 @@
   "Returns true if at least one player on a side is human"
   ([g side]
     (boolean 
-      (some (fn [[i p]] (and (= side (:side p)) (:is-human p))) (:players g)))))
+      (some (fn [[_i p]] (and (= side (:side p)) (:is-human p))) (:players g)))))
 
 ;; =========================================================================
 ;; Update functions
@@ -76,7 +77,7 @@
           :units
           (let [units (:units g)
                 uid (:uid update)
-                ^ic.engine.Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))
+                ^Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))
                 x (.x pos)
                 y (.y pos)
                 unit (get-unit g x y)
@@ -88,7 +89,7 @@
           (let [units (:units g)
                 uid (:uid update)]
             ;; check unit actually exists, might have been destroyed....
-            (if-let [^ic.engine.Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))]
+            (if-let [^Point pos (.get ^mikera.persistent.LongMap (:unit-locations g) (long uid))]
               (let [x (.x pos)
                     y (.y pos)
                     unit (get-unit g x y)
@@ -172,7 +173,7 @@
           (concat
             (if (nil? u)
               '()
-              (list (msg-remove-unit u tx ty)))
+              (list (cmd/msg-remove-unit u tx ty)))
             (list update)))
       "Remove unit"
         (let [tx (:tx update)
@@ -180,12 +181,12 @@
               u (get-unit g tx ty)]
           (if (nil? u)
             '()
-            (list (msg-remove-unit u tx ty))))
+            (list (cmd/msg-remove-unit u tx ty))))
       "Set terrain"
         (let [tx (:tx update)
               ty (:ty update)
               terrain (:terrain update)]
-           (list (msg-set-terrain tx ty terrain)))
+           (list (cmd/msg-set-terrain tx ty terrain)))
       "Player properties"
         (list update)
       "Unit property"
@@ -201,14 +202,14 @@
     ;(println event)
     (cond 
       (nil? sp)
-        (list (msg-command-fail (str "Unit not found for command " command)))
+        (list (cmd/msg-command-fail (str "Unit not found for command " command)))
       :default
 	      (let [x (.x sp)
 	            y (.y sp)
 	            u (get-unit g x y)] 
 	        (cond 
             (not= player-id (:player-id u))
-              (list (msg-command-fail (str "Illegal player ID " player-id " for unit " u)))
+              (list (cmd/msg-command-fail (str "Illegal player ID " player-id " for unit " u)))
             :default
 		          (let [ability (ic.units/find-ability u abname)] 
 		            (apply-to-game ability g u x y tx ty command)))))))
@@ -358,17 +359,18 @@
     (mcu/list-not-nil
 	    (if 
 	      (not (= aps new-aps))
-	      (msg-update-unit u :aps new-aps)
+	      (cmd/msg-update-unit u :aps new-aps)
 	      nil)
       (if
         (not (empty? contents))
-        (msg-update-unit u :contents 
+        (cmd/msg-update-unit u :contents 
           (mcu/map-vector (fn [unit] (assoc unit :aps (:apsmax unit))) contents))
         nil))))
 
 
-(defn handle-turn-event [g event]
+(defn handle-turn-event 
   "Handles the End of Turn event, returning list of updates"
+  [g event]
   (let [{ cmd :command-type } event
         ^mikera.persistent.LongMap unit-locs (:unit-locations g)
         resource-tally (atom {})]
@@ -376,7 +378,7 @@
     ; TODO: fix base time update
     (concat
 	    (doall (mapcat
-	      (fn [^ic.engine.Point pos]
+	      (fn [^Point pos]
 	        (let [x (.x pos)
 	              y (.y pos)
 	              u (get-unit g x y) 
@@ -397,10 +399,10 @@
           (let [player (get-player g player-id)
                 new-total (max 0 (+ impact (:resources player)))]
 ;            (println "Add resources for " (:name player) ": " impact " -> " new-total " total")
-            (msg-update-player player 
+            (cmd/msg-update-player player 
               {:resources new-total})))
         @resource-tally))
-      (list (msg-next-turn)))))
+      (list (cmd/msg-next-turn)))))
 
 
 

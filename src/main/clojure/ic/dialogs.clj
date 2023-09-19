@@ -1,5 +1,6 @@
 (ns ic.dialogs
   "Dialog boxes"
+  (:refer-clojure :exclude [update])
   (:use [ic protocols engine map units game gamefactory])
   (:use [mc.util])
   (:require [mc.resource])

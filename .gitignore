@@ -4,5 +4,6 @@
 .settings
 .classpath
 .clj-kondo
+.calva
 /bin/
 .lsp

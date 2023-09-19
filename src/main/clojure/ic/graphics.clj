@@ -1,7 +1,6 @@
 (ns ic.graphics
   "Loader code for graphics files"
   (:require [mc.resource])
-  (:use [ic.protocols])
   (:import  [mikera.ui.steampunk Images]))
 
 (def ^java.awt.image.BufferedImage unit-image

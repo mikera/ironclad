@@ -1,11 +1,16 @@
 (ns ic.interface 
   "The main Ironclad user interface"
-  (:require [ic.protocols :refer [Location get-x ]])
-  (:require [mc.util :as mcu])
+  (:require [ic.game :refer [get-updates]]
+            [ic.protocols :refer [ability-icon apply-to-gui get-command
+                                  get-map get-x left-click Location mouse-dragged
+                                  nameString needs-param? PCommandState right-click update-command-state]])
+  (:require [mc.util :as mcu :refer [get-element-after middle]])
   (:require [mc.resource])
   (:require [mc.ui])
   (:require [ic.ui])
-  (:require [ic engine game])
+  (:refer-clojure :exclude [update])
+  (:require [ic.engine :refer :all])
+  (:require [ic.engine :refer :all])
   (:require [ic.command])
   (:require [ic.dialogs])
   (:require [ic.gamefactory])
@@ -13,19 +18,40 @@
   (:require [ic.renderer])
   (:require [ic.serial])
   (:require [ic.units])
-  (:import (javax.swing JScrollPane JCheckBox JOptionPane JFileChooser JTextPane ListModel SwingUtilities DefaultListModel JFrame JSeparator JComponent JList JTextField JTextArea JButton JPanel BoxLayout BorderFactory Timer)
-           (java.awt.event ActionListener ActionEvent MouseAdapter MouseMotionAdapter MouseEvent)
+  (:import (ic ListCellData)
+           (java.awt
+            Color
+            Dimension
+            Graphics
+            Graphics2D
+            GridLayout
+            Rectangle)
+           (java.awt.event
+            ActionEvent
+            ActionListener
+            MouseAdapter
+            MouseEvent
+            MouseMotionAdapter)
            (java.awt.image BufferedImage)
-           (java.net URL)
            (java.io File)
-           (javax.swing.event ListSelectionListener ListSelectionEvent)
-           (java.awt Point GraphicsConfiguration Graphics2D GridLayout BorderLayout FlowLayout Rectangle Dimension Graphics Color)
+           (javax.swing
+            DefaultListModel
+            JButton
+            JCheckBox
+            JComponent
+            JFileChooser
+            JList
+            JOptionPane
+            JPanel
+            JScrollPane
+            JSeparator
+            JTextArea
+            ListModel)
+           (javax.swing.event ListSelectionEvent ListSelectionListener)
            (mikera.engine Hex)
+           (mikera.gui BufferedImageIcon)
            (mikera.util Tools)
-           (mikera.ui.steampunk PanelBorder)
-           (ic ListCellData)
-           (net.miginfocom.swing MigLayout)
-           (mikera.gui BufferedImageIcon)))
+           (net.miginfocom.swing MigLayout)))
 
 (def DEBUG-PRINT-COMMANDS false)
 
@@ -132,7 +158,7 @@
 			  updated-game (reduce
 			       (fn [g u]
                 (try
-			            (update g u)
+			            (ic.game/update g u)
 							    (catch Throwable t 	                    
 							      (.printStackTrace t)
                     g)))
@@ -212,7 +238,7 @@
     (if (:playing @state) (do
       (if (= [0] (ic.game/active-sides (:game @state)))
         (victory))
-      (if (not (list-contains? (ic.game/active-sides (:game @state)) 0))
+      (if (not (mcu/list-contains? (ic.game/active-sides (:game @state)) 0))
         (loss))))
     (update-ui-state!)
     (Thread/sleep 40)
@@ -346,7 +372,7 @@
 				      (ic.dialogs/show-select-unit-dialog 
 				        "Select a unit to delpoy: " 
 				        (filter #(ic.units/suitable-terrain? % (get-terrain game tx ty)) contents))
-            pos (find-position contents deploy-unit)]
+            pos (mcu/find-position contents deploy-unit)]
         pos)
     :default nil))
 
@@ -421,7 +447,7 @@
       (let [u (get-unit (:game @state) x y)]
         (if (nil? u)
           (nothing-selected-state)
-          (view-unit-state u x y nil))))
+          (view-unit-state u x y))))
     (list-click [c v]
       (let [ux (:x c)
             uy (:y c)

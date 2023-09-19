@@ -1,6 +1,6 @@
 (ns ic.engine
   "The main Ironclad game engine"
-  (:require [ic.protocols :refer [PLocationSet]])
+  (:require [ic.protocols :as icp :refer [PGame PLocationSet PDrawable PValidatable get-points]])
   (:require [mc util] :refer [get-points])
   (:require [clojure.set]))
 
@@ -24,27 +24,27 @@
 ; Concrete type to implement a set of points
 (deftype PointSet [^clojure.lang.IPersistentSet pointset]
   PLocationSet
-    (get-points [p] pointset)
+    (get-points [_p] pointset)
     (union [p q]  
       (reduce conj p (get-points q)))
-    (intersection [p q] 
+    (intersection [_p q] 
       (clojure.set/intersection pointset (get-points q)))
-    (expand [p]
+    (expand [_p]
       (PointSet. (reduce clojure.set/union  pointset (map adjacents pointset))))
   clojure.lang.Seqable
-    (seq [p] (seq  pointset))
+    (seq [_p] (seq  pointset))
   clojure.lang.ISeq
-    (first [p] (first pointset))
-    (next [p] (next pointset))
-    (more [p] (rest pointset))
-    (cons [p x] (cons x pointset)))
+    (first [_p] (first pointset))
+    (next [_p] (next pointset))
+    (more [_p] (rest pointset))
+    (cons [_p x] (cons x pointset)))
 
 ; Concrete type to represent a point location
 (deftype Point [^long x ^long y]
   Object
-    (toString [self] (str "(" x "," y ")"))
-    (hashCode [self] (unchecked-add x (Integer/rotateRight y 16)))
-    (equals [self b] 
+    (toString [_self] (str "(" x "," y ")"))
+    (hashCode [_self] (unchecked-add x (Integer/rotateRight y 16)))
+    (equals [_self b] 
             (if (instance? Point b) 
               (let [b ^Point b] (and (= x (.x b)) (= y (.y b)))) 
               false)))
@@ -91,16 +91,16 @@
 			            (+ (.y p) (aget mikera.engine.Hex/HEX_DY i))) 
 		    pts))))
 
-(defn ^Point point 
-  ([x y] 
+(defn point 
+  (^Point [x y] 
     (Point. (int x) (int y)))
-  ([[x y]] 
+  (^Point [[x y]] 
     (Point. (int x) (int y))))
 
-(defn ^PointSet point-set 
-  ([] 
+(defn point-set 
+  (^PointSet [] 
     (PointSet. #{}))
-  ([#^Point x] 
+  (^PointSet [#^Point x] 
     (PointSet. #{x})))
 
 ; Direction function
@@ -113,7 +113,7 @@
   ([^Point p ^Integer tx ^Integer ty]
     (mikera.engine.Hex/direction (- tx (.x p)) (- ty (.y p))))
   ([^Integer sx ^Integer sy ^Integer tx ^Integer ty]
-    (mikera.engine.Hex/direction (- tx sx) (- ty sx))))
+    (mikera.engine.Hex/direction (- tx sx) (- ty sy))))
 
 
 ; Map functions
@@ -122,11 +122,11 @@
 
 (defn new-map  
   (^mikera.persistent.SparseMap []
-    (do EMPTY-MAP)))
+    EMPTY-MAP))
 
 (defn new-units-map  
   (^mikera.persistent.SparseMap []
-    (do EMPTY-MAP)))
+    EMPTY-MAP))
 
 
 (defn mget [^mikera.persistent.SparseMap m ^long x ^long y]
@@ -183,18 +183,18 @@
       (* (:ix t) TERRAIN_SIZE))
 	  (sourcey [t]
       (* (:iy t) TERRAIN_SIZE))
-	  (sourcew [t]
+	  (sourcew [_t]
       TERRAIN_SIZE)
-		(centrex [t]
+		(centrex [_t]
 		  HALF_TERRAIN_SIZE)
-		(centrey [t]
+		(centrey [_t]
 		  HALF_TERRAIN_SIZE)
-	  (sourceh [t]
+	  (sourceh [_t]
       TERRAIN_SIZE)
 	  (source-image [t]
       (:source-image t))
     (drawable-icon [t]
-     (mikera.gui.BufferedImageIcon. (source-image t) (sourcex t) (sourcey t) (sourcew t) (sourceh t))))
+     (mikera.gui.BufferedImageIcon. (icp/source-image t) (icp/sourcex t) (icp/sourcey t) (icp/sourcew t) (icp/sourceh t))))
 
 ;; ==================================================================
 ;; utility functions
@@ -204,7 +204,7 @@
 
 (defrecord Player []
     PValidatable
-	   (validate [p]))
+	   (validate [_p]))
 
 (def default-player-data 
   {:name "No name"
@@ -235,23 +235,23 @@
       (* (+ (+ (int (:ix u)) (if (:oriented-image u) (int (:dir u)) (int 0))) (int (* SIDE_IMAGE_OFFSET (:side u)))) (int UNIT_SIZE)))
     (sourcey [u]
       (* (long (:iy u)) UNIT_SIZE))
-    (centrex [u]
+    (centrex [_u]
       HALF_UNIT_SIZE)
-    (centrey [u]
+    (centrey [_u]
       HALF_UNIT_SIZE)
-    (sourcew [u]
+    (sourcew [_u]
       UNIT_SIZE)
-    (sourceh [u]
+    (sourceh [_u]
       UNIT_SIZE)
     (source-image [u]
       (:source-image u))
     (drawable-icon [u]
      (mikera.gui.BufferedImageIcon. 
-			(source-image u) 
-			(+ (sourcex u) UNIT_ICON_CLIP) 
-			(+ (sourcey u) UNIT_ICON_CLIP) 
-			(- (sourcew u) (* 2 UNIT_ICON_CLIP)) 
-			(- (sourceh u) (* 2 UNIT_ICON_CLIP))))
+			(icp/source-image u) 
+			(+ (icp/sourcex u) UNIT_ICON_CLIP) 
+			(+ (icp/sourcey u) UNIT_ICON_CLIP) 
+			(- (icp/sourcew u) (* 2 UNIT_ICON_CLIP)) 
+			(- (icp/sourceh u) (* 2 UNIT_ICON_CLIP))))
    PValidatable
   		(validate [u]
 			  (assert (>= (:aps u) 0))
@@ -299,7 +299,7 @@
   PValidatable
 	  (validate [g]
 		  (let [^mikera.persistent.LongMap unit-locs (:unit-locations g)
-		        ^mikera.persistent.SparseMap units (:units g)
+		        ;; ^mikera.persistent.SparseMap units (:units g)
 		        players ^mikera.persistent.LongMap (:players g)]
 			  (doseq [[uid ^ic.engine.Point loc] unit-locs]
 			    (let [u (get-unit g (.x loc) (.y loc))
@@ -308,11 +308,11 @@
 				    (assert (= uid (:id u)))
 			      (assert (not (nil? player-id)))
 		        (assert (not (nil? (.get players player-id))))
-            (validate u)))
+            (icp/validate u)))
 			  (doseq [[pid player] (:players g)]
 			    (let []
 			      (assert (= pid (:id player)))
-            (validate player))))
+            (icp/validate player))))
 		  true))
 
 (defn location-of-unit ^ic.engine.Point [^Game game unit-or-id]
@@ -321,7 +321,7 @@
     (.get ^mikera.persistent.LongMap (:unit-locations game) (long unit-or-id))))
 
 (defn remove-unit [g ^long x ^long y]
-  (let [^PUnit u (mget (:units g) x y)
+  (let [u (mget (:units g) x y)
         uid (long (:id u))]
     (-> g
       (assoc :units (mset (:units g) x y nil))

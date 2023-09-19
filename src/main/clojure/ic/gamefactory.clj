@@ -1,7 +1,7 @@
 (ns ic.gamefactory
   "Map and level generation routines"
   (:use [ic protocols engine map units game])
-  (:require [mc.util])
+  (:require [mc.util :refer [applyn rand-choice]])
   (:import [mikera.engine Hex])
   (:import [mikera.util Rand]))
 

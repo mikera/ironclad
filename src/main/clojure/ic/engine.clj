@@ -1,7 +1,6 @@
 (ns ic.engine
   "The main Ironclad game engine"
-  (:require [ic.protocols :as icp :refer [PGame PLocationSet PDrawable PValidatable get-points]])
-  (:require [mc util] :refer [get-points])
+  (:require [ic.protocols :as icp :refer [get-points PGame PLocationSet PDrawable PValidatable]])
   (:require [clojure.set]))
 
 (set! *warn-on-reflection* true)

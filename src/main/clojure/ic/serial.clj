@@ -1,6 +1,6 @@
 (ns ic.serial
   "Game data serialization and deserialization routines"
-  (:require [ic.engine :refer [point]]
+  (:require [ic.engine :as eng :refer [point new-map]]
             [mc.util :as mcu])
   (:require [ic protocols engine game units map gamefactory])
   (:import [mikera.util Resource Tools])
@@ -157,10 +157,10 @@
     (fn [^mikera.persistent.SparseMap sm ^Integer iy row]
       (mcu/reduce-indexed
         (fn [^mikera.persistent.SparseMap sm ^Integer ix v]
-          (mcu/mset sm (+ tx ix) (+ ty iy) (decode v)))
+          (eng/mset sm (+ tx ix) (+ ty iy) (decode v)))
         sm
         row))
-    (mcu/new-map)
+    (eng/new-map)
     rows))
 
 (defn decode-longmap [[dtype m]]

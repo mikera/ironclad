@@ -2,7 +2,8 @@
   (:require [clojure.test :refer [deftest is]]
             [ic.command :refer [command]]
             [ic.engine :refer [add-unit get-unit location-of-unit new-game
-                               player point set-terrain terrain]]
+                               player point set-terrain]]
+            [ic.map :refer [terrain]]
             [ic.game :refer [apply-command]]
             [ic.protocols :refer [add-player validate]]
             [ic.units :as units :refer :all])

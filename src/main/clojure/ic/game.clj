@@ -6,7 +6,6 @@
   (:require [mc.util :as mcu])
   (:import [mikera.persistent SparseMap])
   (:import [mikera.persistent LongMap])
-  (:import [mikera.util Rand])
   (:use [mc.util])
   (:use [clojure.test]))
 
@@ -27,10 +26,11 @@
 (def ^:const MAX_AI_TURN_MILLIS 2400)
 
 
-(defn active-sides [game]
+(defn active-sides 
   "Returns a sorted list of sides with active units"
+  [game]
   (sort (reduce
-    (fn [ss [uid ^ic.engine.Point pos]]
+    (fn [ss [_uid ^ic.engine.Point pos]]
       (let [unit (get-unit game (.x pos) (.y pos))
             player-side (:side unit)]
         (if (not (mcu/list-contains? ss player-side))
@@ -43,7 +43,7 @@
   (mcu/find-first
     (fn [player]
       (= (:side player) side))
-    (.values ^mikera.persistent.LongMap (:players g))))
+    (.values ^LongMap (:players g))))
 
 (defn side-has-human? 
   "Returns true if at least one player on a side is human"
@@ -329,7 +329,7 @@
 
   ([g unit-pred]
     (let [^mikera.persistent.LongMap unit-locs (:unit-locations g)
-          ^mikera.persistent.SparseMap units (:units g)]
+          ^SparseMap units (:units g)]
       ;(println event)
       (mapcat
         (fn [^ic.engine.Point pos]

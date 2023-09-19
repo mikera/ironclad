@@ -7,3 +7,4 @@
 .calva
 /bin/
 .lsp
+.calva/output-window/output.calva-repl

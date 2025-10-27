@@ -1,31 +1,59 @@
 (ns ic.interface 
   "The main Ironclad user interface"
-  (:use [ic.protocols])
-  (:use [mc.util])
+  (:require [ic.game :refer [get-updates]]
+            [ic.protocols :as icp :refer [ability-icon apply-to-gui get-command
+                                  get-map left-click mouse-dragged
+                                  nameString needs-param? list-click PCommandState right-click update-command-state]])
+  (:require [mc.util :as mcu :refer [get-element-after middle]])
   (:require [mc.resource])
   (:require [mc.ui])
   (:require [ic.ui])
-  (:use [ic engine game])
+  (:refer-clojure :exclude [update])
+  (:require [ic.engine :refer [get-terrain get-unit get-x get-y location-of-unit mget mset mvisit new-map]])
+  (:import [ic.engine Point])
   (:require [ic.command])
+  (:require [ic.sounds])
+  (:require [ic.frame])
   (:require [ic.dialogs])
   (:require [ic.gamefactory])
   (:require [ic.map])
   (:require [ic.renderer])
   (:require [ic.serial])
   (:require [ic.units])
-  (:import (javax.swing JScrollPane JCheckBox JOptionPane JFileChooser JTextPane ListModel SwingUtilities DefaultListModel JFrame JSeparator JComponent JList JTextField JTextArea JButton JPanel BoxLayout BorderFactory Timer)
-           (java.awt.event ActionListener ActionEvent MouseAdapter MouseMotionAdapter MouseEvent)
+  (:import (ic ListCellData)
+           (java.awt
+            Color
+            Dimension
+            Graphics
+            Graphics2D
+            GridLayout
+            Rectangle)
+           (java.awt.event
+            ActionEvent
+            ActionListener
+            MouseAdapter
+            MouseEvent
+            MouseMotionAdapter)
            (java.awt.image BufferedImage)
-           (java.net URL)
            (java.io File)
-           (javax.swing.event ListSelectionListener ListSelectionEvent)
-           (java.awt Point GraphicsConfiguration Graphics2D GridLayout BorderLayout FlowLayout Rectangle Dimension Graphics Color)
+           (javax.swing
+            DefaultListModel
+            JButton
+            JCheckBox
+            JComponent
+            JFileChooser
+            JList
+            JOptionPane
+            JPanel
+            JScrollPane
+            JSeparator
+            JTextArea
+            ListModel)
+           (javax.swing.event ListSelectionEvent ListSelectionListener)
            (mikera.engine Hex)
+           (mikera.gui BufferedImageIcon)
            (mikera.util Tools)
-           (mikera.ui.steampunk PanelBorder)
-           (ic ListCellData)
-           (net.miginfocom.swing MigLayout)
-           (mikera.gui BufferedImageIcon)))
+           (net.miginfocom.swing MigLayout)))
 
 (def DEBUG-PRINT-COMMANDS false)
 
@@ -71,10 +99,10 @@
 
 ; Screen coordinate functions
 
-(defn logical-positionx ^double [sx sy]
+(defn logical-positionx ^double [sx _sy]
   (* ic.renderer/RATIO (/ sx ic.renderer/X_OFFSET) ))
 
-(defn logical-positiony ^double [sx sy]
+(defn logical-positiony ^double [_sx sy]
   (/ sy ic.renderer/Y_OFFSET) )
 
 (defn mapx ^long [sx sy]
@@ -104,35 +132,34 @@
                 (if (nil? lcd) nil (.value lcd))))))))))
 
 (defn victory [] 
-  (do
-    (swap! state assoc :playing false)
-    (ic.sounds/play "Fanfare")
-    (if (= 
-          (JOptionPane/YES_OPTION) 
-          (JOptionPane/showConfirmDialog ic.frame/frame "Congratulations on your splendid victory!\n\n Would you like to return to base?" "Victory!" (JOptionPane/YES_NO_OPTION)))
-      (@exit-function))))
+  (swap! state assoc :playing false)
+  (ic.sounds/play "Fanfare")
+  (when (=
+       (JOptionPane/YES_OPTION)
+       (JOptionPane/showConfirmDialog ic.frame/frame "Congratulations on your splendid victory!\n\n Would you like to return to base?" "Victory!" (JOptionPane/YES_NO_OPTION)))
+    (@exit-function)))
 
 (defn loss [] 
-  (do
-    (swap! state assoc :playing false)
-    (ic.sounds/play "Explosion")
-    (if (= 
-          (JOptionPane/YES_OPTION) 
-          (JOptionPane/showConfirmDialog ic.frame/frame "What rotten luck! We appear to have been beaten.\n\n Shall we return to base for a stiff drink?" "Defeat!" (JOptionPane/YES_NO_OPTION)))
-      (@exit-function))))
+  (swap! state assoc :playing false)
+  (ic.sounds/play "Explosion")
+  (when (=
+       (JOptionPane/YES_OPTION)
+       (JOptionPane/showConfirmDialog ic.frame/frame "What rotten luck! We appear to have been beaten.\n\n Shall we return to base for a stiff drink?" "Defeat!" (JOptionPane/YES_NO_OPTION)))
+    (@exit-function)))
 
 
 ; =============================================================================================
 ; Core game engine / command handler
 
-(defn handle-command [game command]
+(defn handle-command 
   "Handles a given server command and returns the updated overall game"
-  (if DEBUG-PRINT-COMMANDS (println (str "Command received: " command)))
+  [game command]
+  (when DEBUG-PRINT-COMMANDS (println (str "Command received: " command)))
   (let [updates (get-updates game command)
 			  updated-game (reduce
 			       (fn [g u]
                 (try
-			            (update g u)
+			            (ic.game/update g u)
 							    (catch Throwable t 	                    
 							      (.printStackTrace t)
                     g)))
@@ -141,8 +168,9 @@
    (ic.renderer/add-animations-for-updates game updates)
    updated-game))
 
-(defn command-state-update [cs game]
+(defn command-state-update 
   "Gets an updated command state if needed to allow for an updated game state"
+  [cs game]
   (try
     (update-command-state cs game)
     (catch Throwable t
@@ -158,9 +186,10 @@
 (def last-engine-time (atom (System/currentTimeMillis)))
 (def last-turn-time (atom @last-engine-time))
 
-(defn ^java.lang.Runnable engine-loop []
+(defn  
+  engine-loop 
   "Engine loop handles commands"
-  (do 
+  ^java.lang.Runnable []
     ;(println "Tick!")
     (let [commands (:commands @state)
           s (swap! state assoc :commands nil)
@@ -204,15 +233,15 @@
       (swap! state merge {:game new-game :moving-side new-side})
       (reset! last-engine-time new-time))
     (Thread/sleep 40)
-    (recur)))
+    (recur))
 
-(defn ^java.lang.Runnable game-loop [] 
+(defn  game-loop 
   "Game loop handles key interface interactions"
-  (do 
-    (if (:playing @state) (do
-      (if (= [0] (ic.game/active-sides (:game @state)))
+  (^java.lang.Runnable [] 
+    (when (:playing @state) (do
+      (when (= [0] (ic.game/active-sides (:game @state)))
         (victory))
-      (if (not (list-contains? (ic.game/active-sides (:game @state)) 0))
+      (when (not (mcu/list-contains? (ic.game/active-sides (:game @state)) 0))
         (loss))))
     (update-ui-state!)
     (Thread/sleep 40)
@@ -310,7 +339,7 @@
 	    (fn [sm [ability ability-target-map]]
 		    (if (ability-filter ability)
           (reduce
-		        (fn [ssm [^Location p v]] 
+		        (fn [ssm [^Point p _v]] 
 		          (mset ssm (get-x p) (get-y p) ability))
 			      sm
 		        ability-target-map)
@@ -323,7 +352,7 @@
   (reduce 
     (fn [sm [ability ability-target-map]]
       (reduce
-        (fn [ssm [^Location p ^Double v]] 
+        (fn [ssm [^Point p ^Double v]] 
           (let [x (get-x p)
                 y (get-y p)]
             (if (= ability (mget target-map x y))
@@ -346,7 +375,7 @@
 				      (ic.dialogs/show-select-unit-dialog 
 				        "Select a unit to delpoy: " 
 				        (filter #(ic.units/suitable-terrain? % (get-terrain game tx ty)) contents))
-            pos (find-position contents deploy-unit)]
+            pos (mcu/find-position contents deploy-unit)]
         pos)
     :default nil))
 
@@ -421,7 +450,7 @@
       (let [u (get-unit (:game @state) x y)]
         (if (nil? u)
           (nothing-selected-state)
-          (view-unit-state u x y nil))))
+          (view-unit-state u x y))))
     (list-click [c v]
       (let [ux (:x c)
             uy (:y c)
@@ -798,7 +827,7 @@
                     aim (not (:ai-move s))]
                 (.setText button-ai-move (str (if aim "Green AI: on" "Green AI: off")))
                 (merge s 
-                  {:game (if player (update-player game (assoc player :ai-controlled aim)) game)
+                  {:game (if player (icp/update-player game (assoc player :ai-controlled aim)) game)
                    :ai-move aim})))))))))
 
 
@@ -936,12 +965,13 @@
         vpsize (.getExtentSize viewport)
         vx (middle 0 x (- (.width viewsize) (.width vpsize)))
         vy (middle 0 y (- (.height viewsize) (.height vpsize)))
-        point (Point. vx vy)]
+        point (java.awt.Point. vx vy)]
     (.setView viewport gamescreen)
     (.setViewPosition viewport point)
     (.repaint mini-map)))
 
-(defn ^Rectangle game-bounds [game]
+(defn game-bounds 
+  ^Rectangle [game]
   (let [xmin (atom 1000000)
         ymin (atom 1000000)
         xmax (atom -1000000)

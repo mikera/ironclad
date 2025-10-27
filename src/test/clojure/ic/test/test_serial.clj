@@ -1,7 +1,12 @@
 (ns ic.test.test-serial
-  (:use clojure.test)
-  (:use mc.util)
-  (:use [ic protocols engine map units serial]))
+  (:require [clojure.test :refer [deftest is]]
+            [ic.units :as units])
+  (:require [mc.util :as mcu])
+  (:require 
+   [ic.serial :refer [decode encode deserialize serialize]]
+   [ic.map]
+   [ic.engine :as eng :refer [player]]
+   [ic protocols map units serial]))
 
 (defn coded-ok? [x]
   (and
@@ -20,7 +25,7 @@
             :b ["Hello" "World"]
             :c nil
             :cc 2
-            :d (new-map)
+            :d (eng/new-map)
             :e (mikera.persistent.LongMap/EMPTY)}]] 
     (is (= m (decode (encode m))))
     (is (= m (deserialize (serialize m))))))
@@ -28,7 +33,7 @@
 
 (deftest test-map []
   (let [m {:a 1 :b "Hello" :foo :bar}] 
-    (is (= {} (map-difference (deserialize (serialize m)) m)))
+    (is (= {} (mcu/map-difference (deserialize (serialize m)) m)))
     (is (= m (deserialize (serialize m))))))
 
 (deftest test-longmap []
@@ -44,17 +49,17 @@
 
 
 (deftest test-basic-types []
-  (let [a (point 1 2)
-        b (unit "Steam Tank")
-        c (terrain "Grassland")
+  (let [a (eng/point 1 2)
+        b (units/unit "Steam Tank")
+        c (ic.map/terrain "Grassland")
         d (player {:foo :bar})] 
     (is (= nil (deserialize (serialize nil))))
     (is (= a (deserialize (serialize a))))
     (is (= b (decode (encode b))))
     (is (= d (decode (encode d))))
-    (is (= {} (map-difference d (deserialize (serialize d)))))
+    (is (= {} (mcu/map-difference d (deserialize (serialize d)))))
     (is (= d (deserialize (serialize d))))
-    (is (= {} (map-difference b (deserialize (serialize b)))))
+    (is (= {} (mcu/map-difference b (deserialize (serialize b)))))
     (is (= b (deserialize (serialize b))))
     (is (= c (deserialize (serialize c))))))
 
@@ -69,5 +74,5 @@
     (is (.equals (.getValue e1) (.getValue e2)))
     (is (= (first pl) (first (deserialize (serialize pl)))))
     (is (= pl (deserialize (serialize pl))))
-    (is (= {} (map-difference g (deserialize (serialize g)))))
+    (is (= {} (mcu/map-difference g (deserialize (serialize g)))))
     (is (= g (deserialize (serialize g))))))

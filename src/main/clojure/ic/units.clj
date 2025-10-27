@@ -1,12 +1,15 @@
 (ns ic.units
   "This file contains unit definitions and code for unit abilities"
-  (:use [clojure.test])
-  (:use [mc.util])
-  (:use [ic protocols engine map graphics])
-  (:use [ic.command])
+  (:require [clojure.test]
+            [ic.engine :refer [adjacent-point-list calc-dir get-terrain
+                               get-unit get-x get-y location-of-unit mget point]]
+            [ic.protocols :refer [ai-action-param ai-evaluate get-player
+                                  get-targets get-unit-map needs-param? PAbility]])
+  (:require [mc.util :as mcu :refer [list-not-nil applyn rand-choice valmax argmax error list-contains? remove-nth]])
+  (:require [ic protocols engine map graphics])
+  (:require [ic.command :refer [msg-update-unit msg-command-fail msg-remove-unit msg-update-player msg-add-unit msg-move-unit]])
   (:require [mc.csv])
   (:require [ic.lib])
-  (:import [mikera.engine Hex])
   (:import [mikera.util Rand])
   (:import [java.awt Color]))
 
@@ -661,7 +664,7 @@
             deployables (filter (fn [du] (and (> (:aps du) 0) (suitable-terrain? du terrain))) contents)]
         (if (not (empty? deployables))
           (let [du (rand-choice deployables)
-                i (find-position contents du)]
+                i (mcu/find-position contents du)]
             i)
           nil)))
     (apply-to-game [ability game unit sx sy tx ty command]

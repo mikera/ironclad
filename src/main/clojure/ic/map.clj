@@ -4,9 +4,9 @@
   (:use [ic protocols engine])
   (:require [ic.graphics])
   (:require [clojure.set]) 
-  (:import [mikera.engine.Hex])
-  (:import [mikera.math.Bounds4i])
-  (:import [mikera.persistent.SparseMap])
+  (:import [mikera.engine Hex])
+  (:import [mikera.math Bounds4i])
+  (:import [mikera.persistent SparseMap])
   (:import [java.awt Color]))
 
 (set! *warn-on-reflection* true)

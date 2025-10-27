@@ -3,4 +3,8 @@
 .project
 .settings
 .classpath
+.clj-kondo
+.calva
 /bin/
+.lsp
+.calva/output-window/output.calva-repl

@@ -1,8 +1,8 @@
 (ns ic.gamefactory
   "Map and level generation routines"
+  (:refer-clojure :exclude [update])
   (:use [ic protocols engine map units game])
-  (:use [clojure.test])
-  (:use [mc.util])
+  (:require [mc.util :refer [applyn rand-choice]])
   (:import [mikera.engine Hex])
   (:import [mikera.util Rand]))
 

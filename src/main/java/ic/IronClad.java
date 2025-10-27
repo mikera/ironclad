@@ -49,7 +49,6 @@ public class IronClad extends JApplet {
 		JAVA_LAUNCHED = true;
 		START_SCREEN = true;
 		DEBUG_MODE = false;
-		System.setSecurityManager(null);
 
 		Clojure.require("ic.main");
 		Clojure.eval("(ic.main/-main)");
